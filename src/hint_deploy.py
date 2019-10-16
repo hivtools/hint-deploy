@@ -1,3 +1,7 @@
+import docker
+import getpass
+import re
+
 import constellation
 import constellation.config as config
 import constellation.docker_util as docker_util
@@ -62,6 +66,24 @@ def hint_constellation(cfg):
                                       cfg.network, cfg.volumes, cfg)
 
     return obj
+
+
+def hint_user(cfg, action, email, pull, password=None):
+    ref = constellation.ImageReference("mrcide", "hint-user-cli", cfg.hint_tag)
+    if pull or not docker_util.image_exists(str(ref)):
+        docker_util.image_pull("hint cli", str(ref))
+    nw = cfg.network
+    args = [action, email]
+    if action == "add-user":
+        args.append(password or getpass.getpass())
+    client = docker.client.from_env()
+    res = client.containers.run(str(ref), args, network=cfg.network,
+                                remove=True, detach=False)
+    # clean up output for printing by stripping the Spring banner and
+    # preventing too many newlines
+    output = res.decode("UTF-8")
+    pat = ".*?:: Spring Boot ::[^\n]+\n+"
+    print(re.sub(pat, "", output, re.DOTALL, re.S).rstrip())
 
 
 def db_configure(container, cfg):
