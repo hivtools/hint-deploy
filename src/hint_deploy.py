@@ -72,7 +72,6 @@ def hint_user(cfg, action, email, pull, password=None):
     ref = constellation.ImageReference("mrcide", "hint-user-cli", cfg.hint_tag)
     if pull or not docker_util.image_exists(str(ref)):
         docker_util.image_pull("hint cli", str(ref))
-    nw = cfg.network
     args = [action, email]
     if action == "add-user":
         args.append(password or getpass.getpass())
@@ -90,11 +89,10 @@ def db_configure(container, cfg):
     print("[db] Waiting for db to come up")
     docker_util.exec_safely(container, ["wait-for-db"])
     print("[db] Migrating the database")
-    nw = docker_util.container_network(container)
     migrate = constellation.ImageReference(
         "mrcide", "hint-db-migrate", cfg.db_tag)
     args = ["-url=jdbc:postgresql://{}/hint".format(container.name)]
-    container.client.containers.run(str(migrate), args, network=nw.name,
+    container.client.containers.run(str(migrate), args, network=cfg.network,
                                     auto_remove=True, detach=False)
 
 
