@@ -1,0 +1,16 @@
+language: python
+python: 3.5
+
+install:
+  - pip3 install pytest-cov pycodestyle
+
+script:
+  - pip3 install -r requirements.txt
+  - pytest --cov=src
+  - pycodestyle .
+
+after_success:
+  - codecov
+
+services:
+  - docker
