@@ -9,6 +9,7 @@ import constellation.docker_util as docker_util
 
 from src import hint_cli, hint_deploy
 
+
 def test_start_hint():
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
