@@ -1,3 +1,4 @@
 constellation
+docopt
 pytest
 requests
