@@ -112,7 +112,7 @@ def hint_configure(container, cfg):
 
 
 # It can take a while for the container to come up
-def wait(f, message, timeout=10, poll=0.1):
+def wait(f, message, timeout=30, poll=0.1):
     for i in range(math.ceil(timeout / poll)):
         try:
             if f():
