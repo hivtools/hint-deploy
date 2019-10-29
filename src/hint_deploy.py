@@ -1,6 +1,9 @@
 import docker
 import getpass
+import math
 import re
+import requests
+import time
 
 import constellation
 import constellation.config as config
@@ -103,3 +106,18 @@ def hint_configure(container, cfg):
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
                                       "/etc/hint/config.properties")
+    print("[hint] Waiting for hint to become responsive")
+    wait(lambda: requests.get("http://localhost:8080").status_code == 200,
+         "Hint did not become responsive in time")
+
+
+# It can take a while for the container to come up
+def wait(f, message, timeout=10, poll=0.1):
+    for i in range(math.ceil(timeout / poll)):
+        try:
+            if f():
+                return
+        except Exception:
+            pass
+        time.sleep(poll)
+    raise Exception(message)
