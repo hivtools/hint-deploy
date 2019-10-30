@@ -1,12 +1,12 @@
 """
 Usage:
-  hint start [--pull]
-  hint stop  [--volumes] [--network] [--kill] [--force]
-  hint destroy
-  hint status
-  hint user [--pull] add <email> [<password>]
-  hint user [--pull] remove <email>
-  hint user [--pull] exists <email>
+  ./hint start [--pull]
+  ./hint stop  [--volumes] [--network] [--kill] [--force]
+  ./hint destroy
+  ./hint status
+  ./hint user [--pull] add <email> [<password>]
+  ./hint user [--pull] remove <email>
+  ./hint user [--pull] exists <email>
 
 Options:
   --pull           Pull images before starting
