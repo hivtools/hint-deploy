@@ -6,7 +6,7 @@ db:
   volume: "hint_db_data"
 
 hint:
-  tag: "mrc-572"
+  tag: "master"
   volume: "hint_uploads"
   expose: true
 
