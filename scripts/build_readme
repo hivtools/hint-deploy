@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+import ast
+with open("src/hint_cli.py", "r") as f:
+    tree = ast.parse(f.read())
+
+usage = ast.get_docstring(tree).strip()
+
+with open("README.md", "r") as f:
+    readme = f.read()
+
+start = "<!-- Usage begin -->\n"
+end = "<!-- Usage end -->\n"
+
+i0 = readme.find(start) + len(start)
+i1 = readme.find(end)
+
+readme = readme[:i0] + "```\n" + usage + "\n```\n" + readme[i1:]
+
+with open("README.md", "w") as f:
+    f.write(readme)

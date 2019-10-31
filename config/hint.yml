@@ -1,0 +1,19 @@
+redis:
+  tag: "5.0"
+
+db:
+  tag: master
+  volume: "hint_db_data"
+
+hint:
+  tag: "master"
+  volume: "hint_uploads"
+  expose: true
+
+hintr:
+  tag: "master"
+
+docker:
+  network: hint_nw
+  default_tag: master
+  prefix: hint

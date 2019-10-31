@@ -1,0 +1,18 @@
+language: python
+python: 3.5
+
+install:
+  - pip3 install pytest-cov pycodestyle
+
+script:
+  # This line is required until we push constellation up onto pypi
+  - pip3 install git+https://github.com/reside-ic/constellation@reside-48#egg=constellation
+  - pip3 install -r requirements.txt
+  - pytest --cov=src
+  - pycodestyle .
+
+after_success:
+  - codecov
+
+services:
+  - docker
