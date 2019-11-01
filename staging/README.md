@@ -13,7 +13,7 @@ ssh hint@naomi.dide.ic.ac.uk
  (ebola2018.dide.ic.ac.uk), run the following commands.
 
 ```
-git clone https://github.com/imperialebola2018/hint-deploy hint-deploy
+git clone https://github.com/imperialebola2018/hint-deploy
 ```
 
 ### Requirements
@@ -31,3 +31,13 @@ sudo ./hint-deploy/staging/provision/setup-vault
 (cd hint-deploy/staging; vagrant up)
 cp hint-deploy/staging/scripts/ssh-staging ~
 ```
+
+### Actual deployment
+
+```
+./ssh-staging
+cd hint-deploy
+./hint start --pull
+```
+
+after which hint will be available as http://naomi.dide.ic.ac.uk:8080
