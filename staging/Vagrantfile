@@ -13,7 +13,6 @@ ram_size_mb = '16384'
 
 Vagrant.configure(2) do |config|
   config.vm.box = box
-  config.vm.synced_folder 'shared', '/vagrant'
 
   config.vm.provision :shell do |shell|
     shell.path = 'provision/setup-docker'
