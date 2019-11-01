@@ -52,7 +52,8 @@ def hint_constellation(cfg):
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     hintr = constellation.ConstellationContainer(
-        "hintr", hintr_ref, args=hintr_args, environment=hintr_env)
+        "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
+        environment=hintr_env)
 
     # 4. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
