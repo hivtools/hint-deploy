@@ -13,7 +13,7 @@ ssh hint@naomi.dide.ic.ac.uk
  (ebola2018.dide.ic.ac.uk), run the following commands.
 
 ```
-git clone https://github.com/imperialebola2018/hint-deploy
+git clone https://github.com/mrc-ide/hint-deploy
 ```
 
 ### Requirements
