@@ -27,6 +27,14 @@ class HintConfig:
                                                  True, False)
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
+
+        self.proxy_host = config.config_string(dat, ["proxy", "host"])
+        self.proxy_port_http = config.config_integer(dat,
+                                                     ["proxy", "port_http"],
+                                                     True, 80)
+        self.proxy_port_https = config.config_integer(dat,
+                                                      ["proxy", "port_https"],
+                                                      True, 443)
         self.volumes = {
             "db": config.config_string(dat, ["db", "volume"]),
             "uploads": config.config_string(dat, ["hint", "volume"])}
@@ -63,7 +71,18 @@ def hint_constellation(cfg):
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
         configure=hint_configure)
 
-    containers = [db, redis, hintr, hint]
+    # 5. proxy
+    proxy_ref = constellation.ImageReference("reside", "proxy-nginx", "latest")
+    proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
+    proxy_args = ["hint:8080",
+                  cfg.proxy_host,
+                  str(cfg.proxy_port_http),
+                  str(cfg.proxy_port_https)]
+    proxy = constellation.ConstellationContainer(
+        "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
+        configure=proxy_configure)
+
+    containers = [db, redis, hintr, hint, proxy]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes, cfg)
@@ -109,6 +128,14 @@ def hint_configure(container, cfg):
     print("[hint] Waiting for hint to become responsive")
     wait(lambda: requests.get("http://localhost:8080").status_code == 200,
          "Hint did not become responsive in time")
+
+
+def proxy_configure(container, cfg):
+    print("[proxy] Configuring proxy")
+    print("Generating self-signed certificates for proxy")
+    args = ["self-signed-certificate", "/run/proxy",
+            "GB", "London", "IC", "reside", cfg.proxy_host]
+    docker_util.exec_safely(container, args)
 
 
 # It can take a while for the container to come up

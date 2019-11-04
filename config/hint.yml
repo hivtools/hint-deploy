@@ -13,6 +13,11 @@ hint:
 hintr:
   tag: "master"
 
+proxy:
+  host: localhost
+  # port_http: 80
+  # port_https: 443
+
 docker:
   network: hint_nw
   default_tag: master

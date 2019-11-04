@@ -26,6 +26,10 @@ Options:
 ```
 <!-- Usage end -->
 
+## Proxy & SSL
+
+For now, we're going to use self-signed certificates for `naomi.dide.ic.ac.uk`, which we will replace with more reasonable certificates later.  Certificates are generated during start-up of the proxy container.
+
 ## License
 
 MIT © Imperial College of Science, Technology and Medicine
