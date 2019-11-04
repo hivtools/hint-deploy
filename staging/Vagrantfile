@@ -4,13 +4,6 @@ domain = 'localdomain'
 box = "bento/ubuntu-18.04"
 ram_size_mb = '16384'
 
-# vault_config_file = 'shared/vault_config'
-# if !File.file?(vault_config_file)
-#   raise "Run ./staging/scripts/vault-prepare first!"
-# end
-# vault_config = Hash[File.read(vault_config_file).split("\n").
-#                      map{|s| s.split('=')}]
-
 Vagrant.configure(2) do |config|
   config.vm.box = box
 
