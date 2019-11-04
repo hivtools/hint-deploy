@@ -26,6 +26,18 @@ Options:
 ```
 <!-- Usage end -->
 
+## Simulate slow connections
+
+For testing performance, connect the application to [toxiproxy](https://toxiproxy.io) by running
+
+```
+./scripts/slow
+```
+
+and then connect to http://localhost:8081
+
+The bandwidth and latency of the connection will be affected - see `./scripts/slow --help` for details.
+
 ## License
 
 MIT © Imperial College of Science, Technology and Medicine
