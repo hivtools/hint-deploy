@@ -1,3 +1,4 @@
+import docker
 import io
 import pytest
 import requests
@@ -5,6 +6,7 @@ import time
 
 from contextlib import redirect_stdout
 
+import constellation
 import constellation.docker_util as docker_util
 
 from src import hint_cli, hint_deploy
@@ -68,3 +70,27 @@ def test_start_hint_from_cli():
     assert res.status_code == 200
     assert "Login" in res.content.decode("UTF-8")
     hint_cli.main(["stop"])
+
+
+# this checks that specifying the ssl certificates in the
+# configuration copies them into the container, but does not involve
+# vault or the full deployment - it's all super minimal.
+def test_configure_proxy():
+    cfg = hint_deploy.HintConfig("config", "staging")
+    cl = docker.client.from_env()
+    args = ["localhost:80", "localhost", "80", "443"]
+    container = cl.containers.run("reside/proxy-nginx:master", args,
+                                  detach=True, auto_remove=False)
+    args = ["self-signed-certificate", "/tmp",
+            "GB", "London", "IC", "reside", cfg.proxy_host]
+    docker_util.exec_safely(container, args)
+    cert = docker_util.string_from_container(container, "/tmp/certificate.pem")
+    key = docker_util.string_from_container(container, "/tmp/key.pem")
+    cfg.proxy_ssl_certificate = cert
+    cfg.proxy_ssl_key = key
+    hint_deploy.proxy_configure(container, cfg)
+    assert docker_util.string_from_container(
+        container, "/run/proxy/certificate.pem") == cert
+    assert docker_util.string_from_container(
+        container, "/run/proxy/key.pem") == key
+    container.kill()
