@@ -36,9 +36,14 @@ class HintConfig:
         self.proxy_port_https = config.config_integer(dat,
                                                       ["proxy", "port_https"],
                                                       True, 443)
+        self.proxy_ssl_certificate = config.config_string(
+            dat, ["proxy", "ssl", "certificate"], True)
+        self.proxy_ssl_key = config.config_string(
+            dat, ["proxy", "ssl", "key"], True)
         self.volumes = {
             "db": config.config_string(dat, ["db", "volume"]),
             "uploads": config.config_string(dat, ["hint", "volume"])}
+        self.vault = config.config_vault(dat, ["vault"])
 
 
 def hint_constellation(cfg):
@@ -87,7 +92,8 @@ def hint_constellation(cfg):
     containers = [db, redis, hintr, hint, proxy]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
-                                      cfg.network, cfg.volumes, cfg)
+                                      cfg.network, cfg.volumes,
+                                      data=cfg, vault_config=cfg.vault)
 
     return obj
 
@@ -134,10 +140,17 @@ def hint_configure(container, cfg):
 
 def proxy_configure(container, cfg):
     print("[proxy] Configuring proxy")
-    print("Generating self-signed certificates for proxy")
-    args = ["self-signed-certificate", "/run/proxy",
-            "GB", "London", "IC", "reside", cfg.proxy_host]
-    docker_util.exec_safely(container, args)
+    if cfg.proxy_ssl_certificate and cfg.proxy_ssl_key:
+        print("Copying ssl certificate and key into proxy")
+        docker_util.string_into_container(cfg.proxy_ssl_certificate, container,
+                                          "/run/proxy/certificate.pem")
+        docker_util.string_into_container(cfg.proxy_ssl_key, container,
+                                          "/run/proxy/key.pem")
+    else:
+        print("Generating self-signed certificates for proxy")
+        args = ["self-signed-certificate", "/run/proxy",
+                "GB", "London", "IC", "reside", cfg.proxy_host]
+        docker_util.exec_safely(container, args)
 
 
 # It can take a while for the container to come up
