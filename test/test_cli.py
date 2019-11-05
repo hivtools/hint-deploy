@@ -16,14 +16,14 @@ def test_cli_parse():
 
     assert hint_cli.parse(["stop"]) == \
         ("config", None, "stop", {"kill": False, "remove_network": False,
-                            "remove_volumes": False})
+                                  "remove_volumes": False})
     assert hint_cli.parse(["stop", "--kill", "--network"]) == \
         ("config", None, "stop", {"kill": True, "remove_network": True,
-                            "remove_volumes": False})
+                                  "remove_volumes": False})
 
     assert hint_cli.parse(["destroy"]) == \
         ("config", None, "stop", {"kill": True, "remove_network": True,
-                            "remove_volumes": True})
+                                  "remove_volumes": True})
 
     assert hint_cli.parse(["status"]) == ("config", None, "status", {})
 
@@ -31,17 +31,17 @@ def test_cli_parse():
     password = "password"
     assert hint_cli.parse(["user", "add", email]) == \
         ("config", None, "user", {"email": email, "action": "add-user",
-                            "pull": False, password: None})
+                                  "pull": False, password: None})
     assert hint_cli.parse(["user", "add", "--pull", email, password]) == \
         ("config", None, "user", {"email": email, "action": "add-user",
-                            "pull": True, password: password})
+                                  "pull": True, password: password})
 
     assert hint_cli.parse(["user", "exists", email]) == \
         ("config", None, "user", {"email": email, "action": "user-exists",
-                            "pull": False, password: None})
+                                  "pull": False, password: None})
     assert hint_cli.parse(["user", "remove", email]) == \
         ("config", None, "user", {"email": email, "action": "remove-user",
-                            "pull": False, password: None})
+                                  "pull": False, password: None})
 
 
 def test_user_args_passed_to_hint_user():
