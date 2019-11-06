@@ -1,0 +1,37 @@
+Vagrant.require_version ">= 1.8.2"
+
+domain = 'localdomain'
+box = "bento/ubuntu-18.04"
+ram_size_mb = '16384'
+
+Vagrant.configure(2) do |config|
+  config.vm.box = box
+
+  config.vm.provision :shell do |shell|
+    shell.path = 'provision/setup-docker'
+    shell.args = ['vagrant']
+    shell.reset = true
+  end
+  config.vm.provision :shell do |shell|
+    shell.path = 'provision/setup-pip'
+  end
+  config.vm.provision :shell do |shell|
+    shell.path = 'provision/setup-vault'
+  end
+
+  config.vm.provider :virtualbox do | vbox |
+    vbox.gui = false
+    vbox.memory = ram_size_mb
+  end
+  config.vm.network :private_network, ip: '192.168.81.11'
+  config.vm.network "forwarded_port", guest: 10443, host: 10443
+  config.vm.provision :shell do |shell|
+    shell.path = 'provision/setup-hostname'
+    shell.args = 'staging'
+  end
+
+  config.vm.provision :shell do |shell|
+    shell.path = 'provision/setup-hint'
+    shell.privileged = false
+  end
+end

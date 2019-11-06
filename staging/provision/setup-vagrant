@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -e
+VIRTUALBOX_VERSION=5.2
+VAGRANT_VERSION=2.2.5
+VAGRANT_DEB=vagrant_${VAGRANT_VERSION}_x86_64.deb
+VAGRANT_URL=https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/${VAGRANT_DEB}
+
+if [ -z $SUDO_USER ]; then
+    echo "Run this command with sudo"
+    exit 1
+fi
+
+if command -v VBoxManage > /dev/null; then
+    echo "Virtualbox already installed"
+else
+    echo "Installing Virtualbox"
+    apt-get update
+    apt-get install -y \
+            curl \
+            software-properties-common
+
+    curl -L https://www.virtualbox.org/download/oracle_vbox_2016.asc | \
+        apt-key add -
+    curl -L https://www.virtualbox.org/download/oracle_vbox.asc | \
+        apt-key add -
+
+    add-apt-repository \
+        "deb http://download.virtualbox.org/virtualbox/debian \
+         $(lsb_release -cs) \
+         contrib"
+    apt-get update
+    apt-get install -y virtualbox-${VIRTUALBOX_VERSION}
+fi
+
+if command -v vagrant > /dev/null; then
+    echo "Vagrant already installed"
+else
+    echo "Installing Vagrant"
+    curl -LO $VAGRANT_URL
+    sudo dpkg -i $VAGRANT_DEB
+    rm -f $VAGRANT_DEB
+fi

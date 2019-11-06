@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+
+if [ `id -u` -eq 0 ]; then
+    echo "This script is designed to be run by an ordinary user"
+    exit 1
+fi
+
+git clone https://github.com/mrc-ide/hint-deploy
+sudo -H pip3 install -r hint-deploy/requirements.txt
