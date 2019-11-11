@@ -1,0 +1,12 @@
+proxy:
+  host: naomi.dide.ic.ac.uk
+  port_http: 80
+  port_https: 443
+  ssl:
+    certificate: VAULT:secret/hint/ssl/naomi:certificate
+    key: VAULT:secret/hint/ssl/naomi:key
+
+vault:
+  addr: https://vault.dide.ic.ac.uk:8200
+  auth:
+    method: github

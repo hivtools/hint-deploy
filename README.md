@@ -1,6 +1,6 @@
 # hint-deploy
 
-[![Build Status](https://travis-ci.org/mrc-ide/hint-deploy.svg?branch=master)](https://travis-ci.com/mrc-ide/hint-deploy)
+[![Build Status](https://travis-ci.org/mrc-ide/hint-deploy.svg?branch=master)](https://travis-ci.org/mrc-ide/hint-deploy)
 [![codecov.io](https://codecov.io/github/mrc-ide/hint-deploy/coverage.svg?branch=master)](https://codecov.io/github/mrc-ide/hint-deploy?branch=master)
 
 Deployment scripts for [hint](https://github.com/mrc-ide/hint)
@@ -37,6 +37,10 @@ For testing performance, connect the application to [toxiproxy](https://toxiprox
 and then connect to http://localhost:8081
 
 The bandwidth and latency of the connection will be affected - see `./scripts/slow --help` for details.
+
+## Proxy & SSL
+
+For now, we're going to use self-signed certificates for `naomi.dide.ic.ac.uk`, which we will replace with more reasonable certificates later.  Certificates are generated during start-up of the proxy container.
 
 ## License
 

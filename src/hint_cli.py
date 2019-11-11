@@ -1,6 +1,6 @@
 """
 Usage:
-  ./hint start [--pull]
+  ./hint start [--pull] [<config>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
@@ -22,9 +22,11 @@ from src.hint_deploy import HintConfig, hint_constellation, hint_user
 
 def parse(argv=None):
     path = "config"
+    config = None
     dat = docopt.docopt(__doc__, argv)
     if dat["start"]:
         action = "start"
+        config = dat["<config>"]
         args = {"pull_images": dat["--pull"]}
     elif dat["stop"]:
         action = "stop"
@@ -51,12 +53,12 @@ def parse(argv=None):
                 "action": user_action,
                 "pull": dat["--pull"],
                 "password": dat["<password>"]}
-    return path, action, args
+    return path, config, action, args
 
 
 def main(argv=None):
-    path, action, args = parse(argv)
-    cfg = HintConfig(path)
+    path, config, action, args = parse(argv)
+    cfg = HintConfig(path, config)
     if action == "user":
         hint_user(cfg, **args)
     else:
