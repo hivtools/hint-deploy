@@ -29,12 +29,12 @@ def start(bandwidth, latency):
     cl = docker.client.from_env()
     tox = cl.containers.run("shopify/toxiproxy:2.1.4", name=CONTAINER_NAME,
                             ports={"8081/tcp": 8081}, auto_remove=True,
-                            detach=True)
+                            network="host", detach=True)
 
     print("Creating proxy")
     # Create a toxiproxy
     args = [CLI, "create", "hint", "--listen",
-            "0.0.0.0:8081", "--upstream", "hint:8080"]
+            "0.0.0.0:8081", "--upstream", "localhost:8080"]
     docker_util.exec_safely(tox, args)
 
     print("Configuring proxy")
