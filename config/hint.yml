@@ -22,3 +22,6 @@ docker:
   network: hint_nw
   default_tag: master
   prefix: hint
+
+users:
+  add_test_user: true

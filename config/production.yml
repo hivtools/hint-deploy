@@ -10,3 +10,6 @@ vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
     method: github
+
+users:
+  add_test_user: false
