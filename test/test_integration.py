@@ -60,8 +60,8 @@ def test_start_hint():
     # hintr container itself)
     cl = docker.client.from_env()
     args = ["--silent", "http://hintr:8888/hintr/worker/status"]
-    result = client.containers.run("byrnedo/alpine-curl:latest", args,
-                                   network="hint_nw", stderr=True, remove=True)
+    result = cl.containers.run("byrnedo/alpine-curl:latest", args,
+                               network="hint_nw", stderr=True, remove=True)
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
     assert len(data.keys()) == 2
