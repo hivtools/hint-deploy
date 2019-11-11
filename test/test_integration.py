@@ -1,4 +1,5 @@
 import docker
+import json
 import io
 import pytest
 import requests
@@ -54,6 +55,14 @@ def test_start_hint():
         hint_deploy.hint_user(cfg, "remove-user", user, False)
 
     assert f.getvalue() == "Removing user {}\nOK\n".format(user)
+
+    # Confirm we have brought up exactly two workers (none in the
+    # hintr container itself)
+    args = ["--silent", "http://hintr:8888/hintr/worker/status"]
+    logs = docker_util.return_logs_and_remove(
+        "byrnedo/alpine-curl:latest", args, network="hint_nw")
+    data = json.loads(logs)["data"]
+    assert len(data.keys()) == 2
 
     obj.destroy()
 
