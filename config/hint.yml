@@ -12,6 +12,7 @@ hint:
 
 hintr:
   tag: "master"
+  workers: 2
 
 proxy:
   host: localhost

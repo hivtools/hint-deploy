@@ -28,6 +28,7 @@ class HintConfig:
                                                  True, False)
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
+        self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
 
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
@@ -59,10 +60,10 @@ def hint_constellation(cfg):
                                              cfg.redis_tag)
     redis = constellation.ConstellationContainer("redis", redis_ref)
 
-    # 3. hintr (+ workers, for now)
+    # 3. hintr
     hintr_ref = constellation.ImageReference("mrcide", "hintr",
                                              cfg.hintr_tag)
-    hintr_args = ["--workers=2"]
+    hintr_args = ["--workers=0"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     hintr = constellation.ConstellationContainer(
@@ -89,7 +90,14 @@ def hint_constellation(cfg):
         "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
-    containers = [db, redis, hintr, hint, proxy]
+    # 6. hintr workers
+    worker_ref = constellation.ImageReference("mrcide", "hintr-worker",
+                                              cfg.hintr_tag)
+    worker = constellation.ConstellationService(
+        "worker", worker_ref, cfg.hintr_workers,
+        mounts=hintr_mounts, environment=hintr_env)
+
+    containers = [db, redis, hintr, hint, proxy, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes,
