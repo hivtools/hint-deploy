@@ -6,7 +6,7 @@ install:
 
 script:
   # This line is required if using a branch of constellation:
-  - pip3 install git+https://github.com/reside-ic/constellation@reside-61#egg=constellation
+  # - pip3 install git+https://github.com/reside-ic/constellation@reside-61#egg=constellation
   - pip3 install -r requirements.txt
   - pytest --cov=src
   - pycodestyle .
