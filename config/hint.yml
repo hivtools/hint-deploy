@@ -7,7 +7,9 @@ db:
 
 hint:
   tag: "master"
-  volume: "hint_uploads"
+  volumes:
+    uploads: "hint_uploads"
+    config: "hint_config"
   expose: true
 
 hintr:
@@ -23,3 +25,6 @@ docker:
   network: hint_nw
   default_tag: master
   prefix: hint
+
+users:
+  add_test_user: true
