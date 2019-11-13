@@ -138,8 +138,15 @@ def db_configure(container, cfg):
 
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
-    config = {"hintr_url": "http://hintr:8888",
-              "upload_dir": "/uploads"}
+    config = {
+        "application_url": "http://hint:8080",
+        "email_mode": "disk",
+        "email_password": "",
+        "upload_dir": "/uploads",
+        "hintr_url": "http://hintr:8888",
+        "db_url": "jdbc:postgresql://db/hint",
+        "db_password": "changeme"
+    }
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
                                       "/etc/hint/config.properties")
