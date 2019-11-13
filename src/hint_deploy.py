@@ -29,6 +29,10 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
 
+        self.hint_email_password = config.config_string(
+            dat, ["hint", "email", "password"], True, "")
+        self.hint_email_mode = "real" if self.hint_email_password else "disk"
+
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
                                                      ["proxy", "port_http"],
@@ -140,8 +144,14 @@ def hint_configure(container, cfg):
     print("[hint] Configuring hint")
     config = {
         "application_url": "http://hint:8080",
-        "email_mode": "disk",
-        "email_password": "",
+        # drop (start)
+        "email_server": "smtp.cc.ic.ac.uk",
+        "email_port": 587,
+        "email_username": "naomi",
+        "email_sender": "naomi-notifications@imperial.ac.uk",
+        # drop (end)
+        "email_mode": cfg.hint_email_mode,
+        "email_password": cfg.hint_email_password,
         "upload_dir": "/uploads",
         "hintr_url": "http://hintr:8888",
         "db_url": "jdbc:postgresql://db/hint",

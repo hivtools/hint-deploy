@@ -1,3 +1,7 @@
+hint:
+  email:
+    password: VAULT:secret/hint/email:password
+
 proxy:
   host: naomi.dide.ic.ac.uk
   port_http: 80
