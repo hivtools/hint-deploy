@@ -123,6 +123,41 @@ def hint_constellation(cfg):
     return obj
 
 
+def hint_upgrade(cfg, obj, what):
+    if what == "hintr":
+        hint_upgrade_hintr(cfg, obj)
+    else:
+        hint_upgrade_all(cfg, obj)
+
+
+def hint_upgrade_all(cfg, obj):
+    raise Exception("Not yet implemented")
+
+
+def hint_upgrade_hintr(cfg, obj):
+    hintr = obj.containers.find("hintr")
+    worker = obj.containers.find("worker")
+    container = hintr.get(cfg.prefix)
+
+    # We'll do this via pickle/load of the configuration
+    # if cfg.hintr_workers != len(worker.get(cfg.prefix)):
+    #     raise Exception("Configuration mismatch - wrong number of workers")
+
+    # Always pull the docker image - and do this *before* we start
+    # removing things to minimise downtime.
+    docker_util.image_pull(hintr.name, str(hintr.image))
+
+    if container:
+        if container.status == "running":
+            print("Stopping previous hintr and workers")
+            container.exec_run(["hintr_stop"])
+        docker_util.container_remove_wait(container)
+
+    worker.remove(cfg.prefix)
+
+    obj.start(subset=[hintr.name, worker.name])
+
+
 def hint_user(cfg, action, email, pull, password=None):
     ref = constellation.ImageReference("mrcide", "hint-user-cli", cfg.hint_tag)
     if pull or not docker_util.image_exists(str(ref)):

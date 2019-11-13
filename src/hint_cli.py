@@ -4,6 +4,7 @@ Usage:
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
+  ./hint upgrade (hintr|all) [<config>]
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
@@ -21,7 +22,11 @@ import os.path
 import pickle
 import time
 
-from src.hint_deploy import HintConfig, hint_constellation, hint_user
+from src.hint_deploy import \
+    HintConfig, \
+    hint_constellation, \
+    hint_upgrade, \
+    hint_user
 
 
 def parse(argv=None):
@@ -45,6 +50,10 @@ def parse(argv=None):
     elif dat["status"]:
         action = "status"
         args = {}
+    elif dat["upgrade"]:
+        action = "upgrade"
+        config = dat["<config>"]
+        args = {"what": "hintr" if dat["hintr"] else "all"}
     elif dat["user"]:
         action = "user"
         if dat["add"]:
@@ -109,7 +118,10 @@ def main(argv=None):
         hint_user(cfg, **args)
     else:
         obj = hint_constellation(cfg)
-        obj.__getattribute__(action)(**args)
+        if action == "upgrade":
+            hint_upgrade(cfg, obj, args["what"])
+        else:
+            obj.__getattribute__(action)(**args)
         if action == "start" and cfg.add_test_user:
             email = "test.user@example.com"
             pull = args["pull_images"]
