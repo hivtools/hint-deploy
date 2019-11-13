@@ -41,8 +41,13 @@ class HintConfig:
         self.proxy_ssl_key = config.config_string(
             dat, ["proxy", "ssl", "key"], True)
         self.volumes = {
-            "db": config.config_string(dat, ["db", "volume"]),
-            "uploads": config.config_string(dat, ["hint", "volume"])}
+            "db": config.config_string(
+                dat, ["db", "volume"]),
+            "uploads": config.config_string(
+                dat, ["hint", "volumes", "uploads"]),
+            "config": config.config_string(
+                dat, ["hint", "volumes", "config"])
+        }
         self.vault = config.config_vault(dat, ["vault"])
         self.add_test_user = config.config_boolean(
             dat, ["users", "add_test_user"], True, False)
@@ -74,7 +79,8 @@ def hint_constellation(cfg):
     # 4. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
-    hint_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
+    hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
+                   constellation.ConstellationMount("config", "/etc/hint")]
     hint_ports = [8080] if cfg.hint_expose else None
     hint = constellation.ConstellationContainer(
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
@@ -108,8 +114,10 @@ def hint_user(cfg, action, email, pull, password=None):
     if action == "add-user":
         args.append(password or getpass.getpass())
     client = docker.client.from_env()
+    mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
+                                 read_only=True)]
     res = client.containers.run(str(ref), args, network=cfg.network,
-                                remove=True, detach=False)
+                                mounts=mounts, remove=True, detach=False)
     # clean up output for printing by stripping the Spring banner and
     # preventing too many newlines
     output = res.decode("UTF-8")
