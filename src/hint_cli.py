@@ -64,3 +64,8 @@ def main(argv=None):
     else:
         obj = hint_constellation(cfg)
         obj.__getattribute__(action)(**args)
+        if action == "start" and cfg.add_test_user:
+            email = "test.user@example.com"
+            pull = args["pull_images"]
+            print("Adding test user '{}'".format(email))
+            hint_user(cfg, "add-user", email, pull, "password")

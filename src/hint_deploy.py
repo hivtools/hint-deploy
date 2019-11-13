@@ -44,6 +44,8 @@ class HintConfig:
             "db": config.config_string(dat, ["db", "volume"]),
             "uploads": config.config_string(dat, ["hint", "volume"])}
         self.vault = config.config_vault(dat, ["vault"])
+        self.add_test_user = config.config_boolean(
+            dat, ["users", "add_test_user"], True, False)
 
 
 def hint_constellation(cfg):
