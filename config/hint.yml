@@ -7,7 +7,9 @@ db:
 
 hint:
   tag: "master"
-  volume: "hint_uploads"
+  volumes:
+    uploads: "hint_uploads"
+    config: "hint_config"
   expose: true
 
 hintr:

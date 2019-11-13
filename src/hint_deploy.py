@@ -29,6 +29,10 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
 
+        self.hint_email_password = config.config_string(
+            dat, ["hint", "email", "password"], True, "")
+        self.hint_email_mode = "real" if self.hint_email_password else "disk"
+
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
                                                      ["proxy", "port_http"],
@@ -41,8 +45,13 @@ class HintConfig:
         self.proxy_ssl_key = config.config_string(
             dat, ["proxy", "ssl", "key"], True)
         self.volumes = {
-            "db": config.config_string(dat, ["db", "volume"]),
-            "uploads": config.config_string(dat, ["hint", "volume"])}
+            "db": config.config_string(
+                dat, ["db", "volume"]),
+            "uploads": config.config_string(
+                dat, ["hint", "volumes", "uploads"]),
+            "config": config.config_string(
+                dat, ["hint", "volumes", "config"])
+        }
         self.vault = config.config_vault(dat, ["vault"])
         self.add_test_user = config.config_boolean(
             dat, ["users", "add_test_user"], True, False)
@@ -74,7 +83,8 @@ def hint_constellation(cfg):
     # 4. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
-    hint_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
+    hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
+                   constellation.ConstellationMount("config", "/etc/hint")]
     hint_ports = [8080] if cfg.hint_expose else None
     hint = constellation.ConstellationContainer(
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
@@ -108,8 +118,10 @@ def hint_user(cfg, action, email, pull, password=None):
     if action == "add-user":
         args.append(password or getpass.getpass())
     client = docker.client.from_env()
+    mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
+                                 read_only=True)]
     res = client.containers.run(str(ref), args, network=cfg.network,
-                                remove=True, detach=False)
+                                mounts=mounts, remove=True, detach=False)
     # clean up output for printing by stripping the Spring banner and
     # preventing too many newlines
     output = res.decode("UTF-8")
@@ -130,8 +142,21 @@ def db_configure(container, cfg):
 
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
-    config = {"hintr_url": "http://hintr:8888",
-              "upload_dir": "/uploads"}
+    config = {
+        "application_url": "http://hint:8080",
+        # drop (start)
+        "email_server": "smtp.cc.ic.ac.uk",
+        "email_port": 587,
+        "email_username": "naomi",
+        "email_sender": "naomi-notifications@imperial.ac.uk",
+        # drop (end)
+        "email_mode": cfg.hint_email_mode,
+        "email_password": cfg.hint_email_password,
+        "upload_dir": "/uploads",
+        "hintr_url": "http://hintr:8888",
+        "db_url": "jdbc:postgresql://db/hint",
+        "db_password": "changeme"
+    }
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
                                       "/etc/hint/config.properties")
