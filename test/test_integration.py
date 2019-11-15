@@ -1,4 +1,5 @@
 import docker
+import json
 import io
 import pytest
 import requests
@@ -30,6 +31,8 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert docker_util.container_exists("hint_worker_1")
+    assert docker_util.container_exists("hint_worker_2")
 
     # Some basic user management
     user = "test@example.com"
@@ -53,6 +56,16 @@ def test_start_hint():
 
     assert f.getvalue() == "Removing user {}\nOK\n".format(user)
 
+    # Confirm we have brought up exactly two workers (none in the
+    # hintr container itself)
+    cl = docker.client.from_env()
+    args = ["--silent", "http://hintr:8888/hintr/worker/status"]
+    result = cl.containers.run("byrnedo/alpine-curl:latest", args,
+                               network="hint_nw", stderr=True, remove=True)
+    logs = result.decode("UTF-8")
+    data = json.loads(logs)["data"]
+    assert len(data.keys()) == 2
+
     obj.destroy()
 
     assert not docker_util.network_exists("hint_nw")
@@ -62,6 +75,8 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
+    assert not docker_util.container_exists("hint_worker_1")
+    assert not docker_util.container_exists("hint_worker_2")
 
 
 def test_start_hint_from_cli():
