@@ -10,3 +10,7 @@ vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
     method: github
+
+hint:
+  email:
+    password: VAULT:secret/hint/email:password
