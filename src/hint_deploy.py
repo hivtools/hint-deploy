@@ -29,6 +29,8 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
+        self.hintr_use_mock_model = confg.config_boolean(
+            dat, ["hintr", "use_mock_model"], True, False)
 
         self.hint_email_password = config.config_string(
             dat, ["hint", "email", "password"], True, "")
@@ -77,6 +79,8 @@ def hint_constellation(cfg):
     hintr_args = ["--workers=0"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
+    if cfg.hintr_use_mock_model:
+        hintr_env["USE_MOCK_MODEL"] = "true"
     hintr = constellation.ConstellationContainer(
         "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
         environment=hintr_env)
