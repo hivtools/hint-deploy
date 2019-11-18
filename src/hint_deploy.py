@@ -29,7 +29,7 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
-        self.hintr_use_mock_model = confg.config_boolean(
+        self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
 
         self.hint_email_password = config.config_string(
