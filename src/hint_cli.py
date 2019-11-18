@@ -80,7 +80,6 @@ def read_config(path):
 
 def load_config(path, config=None):
     if os.path.exists(path_last_deploy(path)):
-        print("loading previous configuration")
         cfg = read_config(path)["data"]
     else:
         cfg = HintConfig(path, config)
@@ -109,5 +108,5 @@ def main(argv=None):
             hint_user(cfg, "add-user", email, pull, "password")
         if action == "start":
             save_config(path, config, cfg)
-        if action == "destroy":
+        if action == "stop" and args["remove_volumes"]:
             remove_config(path)

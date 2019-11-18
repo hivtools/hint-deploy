@@ -1,6 +1,7 @@
 import docker
 import json
 import io
+import os.path
 import pytest
 import requests
 import time
@@ -84,7 +85,11 @@ def test_start_hint_from_cli():
     res = requests.get("http://localhost:8080")
     assert res.status_code == 200
     assert "Login" in res.content.decode("UTF-8")
+    assert os.path.exists("config/.last_deploy")
     hint_cli.main(["stop"])
+    assert os.path.exists("config/.last_deploy")
+    hint_cli.main(["destroy"])
+    assert not os.path.exists("config/.last_deploy")
 
 
 # this checks that specifying the ssl certificates in the
