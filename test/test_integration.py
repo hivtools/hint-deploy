@@ -59,10 +59,12 @@ def test_start_hint():
 
     # Confirm we have brought up exactly two workers (none in the
     # hintr container itself)
-    cl = docker.client.from_env()
-    args = ["--silent", "http://hintr:8888/hintr/worker/status"]
-    result = cl.containers.run("byrnedo/alpine-curl:latest", args,
-                               network="hint_nw", stderr=True, remove=True)
+    script = 'message(httr::content(httr::GET(' + \
+             '"http://localhost:8888/hintr/worker/status"),' + \
+             '"text", encoding="UTF-8"))'
+    args = ["Rscript", "-e", script]
+    hintr = obj.containers.get("hintr", obj.prefix)
+    result = docker_util.exec_safely(hintr, args).output
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
     assert len(data.keys()) == 2
