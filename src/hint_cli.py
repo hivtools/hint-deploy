@@ -16,6 +16,10 @@ Options:
 """
 
 import docopt
+import os
+import os.path
+import pickle
+import time
 
 from src.hint_deploy import HintConfig, hint_constellation, hint_user
 
@@ -56,9 +60,43 @@ def parse(argv=None):
     return path, config, action, args
 
 
+def path_last_deploy(path):
+    return path + "/.last_deploy"
+
+
+def save_config(path, config, cfg):
+    dat = {"config": config,
+           "time": time.time(),
+           "data": cfg}
+    with open(path_last_deploy(path), "wb") as f:
+        pickle.dump(dat, f)
+
+
+def read_config(path):
+    with open(path_last_deploy(path), "rb") as f:
+        dat = pickle.load(f)
+    return dat
+
+
+def load_config(path, config=None):
+    if os.path.exists(path_last_deploy(path)):
+        print("loading previous configuration")
+        cfg = read_config(path)["data"]
+    else:
+        cfg = HintConfig(path, config)
+    return cfg
+
+
+def remove_config(path):
+    p = path_last_deploy(path)
+    if os.path.exists(p):
+        print("removing configuration")
+        os.unlink(p)
+
+
 def main(argv=None):
     path, config, action, args = parse(argv)
-    cfg = HintConfig(path, config)
+    cfg = load_config(path, config)
     if action == "user":
         hint_user(cfg, **args)
     else:
@@ -69,3 +107,7 @@ def main(argv=None):
             pull = args["pull_images"]
             print("Adding test user '{}'".format(email))
             hint_user(cfg, "add-user", email, pull, "password")
+        if action == "start":
+            save_config(path, config, cfg)
+        if action == "destroy":
+            remove_config(path)
