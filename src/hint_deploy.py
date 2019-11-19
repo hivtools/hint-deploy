@@ -1,5 +1,4 @@
 import docker
-import getpass
 import math
 import re
 import requests
@@ -129,8 +128,8 @@ def hint_user(cfg, action, email, pull, password=None):
     if pull or not docker_util.image_exists(str(ref)):
         docker_util.image_pull("hint cli", str(ref))
     args = [action, email]
-    if action == "add-user":
-        args.append(password or getpass.getpass())
+    if action == "add-user" and password:
+        args.append(password)
     client = docker.client.from_env()
     mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
                                  read_only=True)]
