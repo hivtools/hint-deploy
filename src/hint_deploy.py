@@ -155,6 +155,7 @@ def db_configure(container, cfg):
 
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
+    docker_util.exec_safely(container, ["mkdir", "-p", "/etc/hint/token_key"])
     config = {
         "application_url": cfg.proxy_url,
         # drop (start)
