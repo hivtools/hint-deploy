@@ -32,8 +32,7 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_1")
-    assert docker_util.container_exists("hint_worker_2")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
 
     # Some basic user management
     user = "test@example.com"
@@ -78,8 +77,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
-    assert not docker_util.container_exists("hint_worker_1")
-    assert not docker_util.container_exists("hint_worker_2")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
 
 
 def test_start_hint_from_cli():
