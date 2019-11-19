@@ -1,6 +1,6 @@
 """
 Usage:
-  ./hint start [--pull] [<config>]
+  ./hint start [--pull] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
@@ -27,11 +27,11 @@ from src.hint_deploy import HintConfig, hint_constellation, hint_user
 
 def parse(argv=None):
     path = "config"
-    config = None
+    config_name = None
     dat = docopt.docopt(__doc__, argv)
     if dat["start"]:
         action = "start"
-        config = dat["<config>"]
+        config_name = dat["<configname>"]
         args = {"pull_images": dat["--pull"]}
     elif dat["stop"]:
         action = "stop"
@@ -58,15 +58,15 @@ def parse(argv=None):
                 "action": user_action,
                 "pull": dat["--pull"],
                 "password": dat["<password>"]}
-    return path, config, action, args
+    return path, config_name, action, args
 
 
 def path_last_deploy(path):
     return path + "/.last_deploy"
 
 
-def save_config(path, config, cfg):
-    dat = {"config": config,
+def save_config(path, config_name, cfg):
+    dat = {"config_name": config_name,
            "time": time.time(),
            "data": cfg}
     with open(path_last_deploy(path), "wb") as f:
@@ -79,20 +79,20 @@ def read_config(path):
     return dat
 
 
-def load_config(path, config=None, refresh=True):
+def load_config(path, config_name=None, refresh=True):
     if os.path.exists(path_last_deploy(path)):
         dat = read_config(path)
         when = timeago.format(dat["time"])
         if refresh:
             action = "Reloaded"
-            cfg = HintConfig(path, dat["config"])
+            cfg = HintConfig(path, dat["config_name"])
         else:
             action = "Loaded"
             cfg = dat["data"]
         print("[{} configuration '{}' ({})]".format(
-            action, dat["config"] or "<base>", when))
+            action, dat["config_name"] or "<base>", when))
     else:
-        cfg = HintConfig(path, config)
+        cfg = HintConfig(path, config_name)
     return cfg
 
 
@@ -104,9 +104,9 @@ def remove_config(path):
 
 
 def main(argv=None):
-    path, config, action, args = parse(argv)
+    path, config_name, action, args = parse(argv)
     refresh = action in ["start", "user"]
-    cfg = load_config(path, config, refresh)
+    cfg = load_config(path, config_name, refresh)
     if action == "user":
         hint_user(cfg, **args)
     else:
@@ -118,6 +118,6 @@ def main(argv=None):
             print("Adding test user '{}'".format(email))
             hint_user(cfg, "add-user", email, pull, "password")
         if action == "start":
-            save_config(path, config, cfg)
+            save_config(path, config_name, cfg)
         if action == "stop" and args["remove_volumes"]:
             remove_config(path)

@@ -20,7 +20,7 @@ pip3 install --user -r requirements.txt
 <!-- Usage begin -->
 ```
 Usage:
-  ./hint start [--pull] [<config>]
+  ./hint start [--pull] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
