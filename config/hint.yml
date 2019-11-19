@@ -6,7 +6,7 @@ db:
   volume: "hint_db_data"
 
 hint:
-  tag: "mrc-729"
+  tag: "master"
   volumes:
     uploads: "hint_uploads"
     config: "hint_config"
