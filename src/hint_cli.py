@@ -20,6 +20,7 @@ import os
 import os.path
 import pickle
 import time
+import timeago
 
 from src.hint_deploy import HintConfig, hint_constellation, hint_user
 
@@ -81,14 +82,15 @@ def read_config(path):
 def load_config(path, config=None, refresh=True):
     if os.path.exists(path_last_deploy(path)):
         dat = read_config(path)
+        when = timeago.format(dat["time"])
         if refresh:
-            print("[Reloaded configuration '{}' ({} s old)]".format(
-                dat["config"] or "<base>", round(time.time() - dat["time"])))
+            action = "Reloaded"
             cfg = HintConfig(path, dat["config"])
         else:
-            print("[Loaded configuration '{}' ({} s old)]".format(
-                dat["config"] or "<base>", round(time.time() - dat["time"])))
+            action = "Loaded"
             cfg = dat["data"]
+        print("[{} configuration '{}' ({})]".format(
+            action, dat["config"] or "<base>", when))
     else:
         cfg = HintConfig(path, config)
     return cfg
