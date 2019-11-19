@@ -123,25 +123,23 @@ def hint_constellation(cfg):
     return obj
 
 
-def hint_upgrade(cfg, obj, what):
+def hint_upgrade(obj, what):
     if what == "hintr":
-        hint_upgrade_hintr(cfg, obj)
+        hint_upgrade_hintr(obj)
     else:
-        hint_upgrade_all(cfg, obj)
+        hint_upgrade_all(obj)
 
 
-def hint_upgrade_all(cfg, obj):
-    raise Exception("Not yet implemented")
+def hint_upgrade_all(obj):
+    obj.containers.pull_images()
+    obj.stop()
+    obj.start()
 
 
-def hint_upgrade_hintr(cfg, obj):
+def hint_upgrade_hintr(obj):
     hintr = obj.containers.find("hintr")
     worker = obj.containers.find("worker")
-    container = hintr.get(cfg.prefix)
-
-    # We'll do this via pickle/load of the configuration
-    # if cfg.hintr_workers != len(worker.get(cfg.prefix)):
-    #     raise Exception("Configuration mismatch - wrong number of workers")
+    container = hintr.get(obj.prefix)
 
     # Always pull the docker image - and do this *before* we start
     # removing things to minimise downtime.
@@ -153,7 +151,7 @@ def hint_upgrade_hintr(cfg, obj):
             container.exec_run(["hintr_stop"])
         docker_util.container_remove_wait(container)
 
-    worker.remove(cfg.prefix)
+    worker.remove(obj.prefix)
 
     obj.start(subset=[hintr.name, worker.name])
 

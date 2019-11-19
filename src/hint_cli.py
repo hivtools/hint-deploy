@@ -119,7 +119,7 @@ def main(argv=None):
     else:
         obj = hint_constellation(cfg)
         if action == "upgrade":
-            hint_upgrade(cfg, obj, args["what"])
+            hint_upgrade(obj, args["what"])
         else:
             obj.__getattribute__(action)(**args)
         if action == "start" and cfg.add_test_user:
