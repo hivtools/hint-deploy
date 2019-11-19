@@ -80,7 +80,10 @@ def read_config(path):
 
 def load_config(path, config=None):
     if os.path.exists(path_last_deploy(path)):
-        cfg = read_config(path)["data"]
+        dat = read_config(path)
+        print("[Loaded configuration '{}' ({} s old)]".format(
+            dat["config"] or "<base>", round(time.time() - dat["time"])))
+        cfg = dat["data"]
     else:
         cfg = HintConfig(path, config)
     return cfg
