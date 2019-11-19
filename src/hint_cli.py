@@ -4,7 +4,7 @@ Usage:
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
-  ./hint upgrade (hintr|all) [<config>]
+  ./hint upgrade (hintr|all)
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
@@ -52,7 +52,6 @@ def parse(argv=None):
         args = {}
     elif dat["upgrade"]:
         action = "upgrade"
-        config = dat["<config>"]
         args = {"what": "hintr" if dat["hintr"] else "all"}
     elif dat["user"]:
         action = "user"
