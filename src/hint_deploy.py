@@ -31,6 +31,11 @@ class HintConfig:
         self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
 
+        self.hintr_ref = constellation.ImageReference(
+            "mrcide", "hintr", self.hintr_tag)
+        self.hintr_worker_ref = constellation.ImageReference(
+            "mrcide", "hintr-worker", self.hintr_tag)
+
         self.hint_email_password = config.config_string(
             dat, ["hint", "email", "password"], True, "")
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
@@ -75,8 +80,7 @@ def hint_constellation(cfg):
     redis = constellation.ConstellationContainer("redis", redis_ref)
 
     # 3. hintr
-    hintr_ref = constellation.ImageReference("mrcide", "hintr",
-                                             cfg.hintr_tag)
+    hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
@@ -108,8 +112,7 @@ def hint_constellation(cfg):
         configure=proxy_configure)
 
     # 6. hintr workers
-    worker_ref = constellation.ImageReference("mrcide", "hintr-worker",
-                                              cfg.hintr_tag)
+    worker_ref = cfg.hintr_worker_ref
     worker = constellation.ConstellationService(
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
@@ -143,7 +146,8 @@ def hint_upgrade_hintr(obj):
 
     # Always pull the docker image - and do this *before* we start
     # removing things to minimise downtime.
-    docker_util.image_pull(hintr.name, str(hintr.image))
+    docker_util.image_pull(hintr.name, str(obj.data.hintr_ref))
+    docker_util.image_pull(hintr.name, str(obj.data.hintr_worker_ref))
 
     if container:
         if container.status == "running":
