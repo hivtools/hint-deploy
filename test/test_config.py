@@ -1,4 +1,4 @@
-from src import hint_deploy
+from src import hint_cli, hint_deploy
 
 
 def test_production_and_staging_use_real_email_configuration():
@@ -18,3 +18,14 @@ def test_proxy_url_drops_port_appropriately():
         "https://example.com"
     assert hint_deploy.proxy_url("example.com", 1443) == \
         "https://example.com:1443"
+
+
+def test_load_and_reload_config():
+    path = "config"
+    config = "production"
+    cfg = hint_deploy.HintConfig(path, config)
+    cfg.hint_tag = "develop"
+    hint_cli.save_config(path, config, cfg)
+    assert hint_cli.load_config(path, None, True).hint_tag == "master"
+    assert hint_cli.load_config(path, None, False).hint_tag == "develop"
+    hint_cli.remove_config(path)
