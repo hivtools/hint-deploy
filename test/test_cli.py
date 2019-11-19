@@ -43,6 +43,11 @@ def test_cli_parse():
         ("config", None, "user", {"email": email, "action": "remove-user",
                                   "pull": False, password: None})
 
+    assert hint_cli.parse(["upgrade", "hintr"]) == \
+        ("config", None, "upgrade", {"what": "hintr"})
+    assert hint_cli.parse(["upgrade", "all"]) == \
+        ("config", None, "upgrade", {"what": "all"})
+
 
 def test_user_args_passed_to_hint_user():
     email = "user@example.com"
