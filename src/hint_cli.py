@@ -79,18 +79,13 @@ def read_config(path):
     return dat
 
 
-def load_config(path, config_name=None, refresh=True):
+def load_config(path, config_name=None):
     if os.path.exists(path_last_deploy(path)):
         dat = read_config(path)
         when = timeago.format(dat["time"])
-        if refresh:
-            action = "Reloaded"
-            cfg = HintConfig(path, dat["config_name"])
-        else:
-            action = "Loaded"
-            cfg = dat["data"]
-        print("[{} configuration '{}' ({})]".format(
-            action, dat["config_name"] or "<base>", when))
+        cfg = HintConfig(path, dat["config_name"])
+        print("[Loaded configuration '{}' ({})]".format(
+            dat["config_name"] or "<base>", when))
     else:
         cfg = HintConfig(path, config_name)
     return cfg
@@ -105,8 +100,7 @@ def remove_config(path):
 
 def main(argv=None):
     path, config_name, action, args = parse(argv)
-    refresh = action in ["start", "user"]
-    cfg = load_config(path, config_name, refresh)
+    cfg = load_config(path, config_name)
     if action == "user":
         hint_user(cfg, **args)
     else:
