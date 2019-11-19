@@ -43,6 +43,8 @@ class HintConfig:
         self.proxy_port_https = config.config_integer(dat,
                                                       ["proxy", "port_https"],
                                                       True, 443)
+        self.proxy_url = proxy_url(self.proxy_host, self.proxy_port_https)
+
         self.proxy_ssl_certificate = config.config_string(
             dat, ["proxy", "ssl", "certificate"], True)
         self.proxy_ssl_key = config.config_string(
@@ -155,7 +157,7 @@ def db_configure(container, cfg):
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
     config = {
-        "application_url": "http://hint:8080",
+        "application_url": cfg.proxy_url,
         # drop (start)
         "email_server": "smtp.cc.ic.ac.uk",
         "email_port": 587,
@@ -202,3 +204,10 @@ def wait(f, message, timeout=30, poll=0.1):
             pass
         time.sleep(poll)
     raise Exception(message)
+
+
+def proxy_url(host, port):
+    if port == 443:
+        return "https://{}".format(host)
+    else:
+        return "https://{}:{}".format(host, port)
