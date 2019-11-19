@@ -92,7 +92,7 @@ def load_config(path, config=None):
 def remove_config(path):
     p = path_last_deploy(path)
     if os.path.exists(p):
-        print("removing configuration")
+        print("Removing configuration")
         os.unlink(p)
 
 
