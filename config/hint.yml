@@ -15,6 +15,7 @@ hint:
 hintr:
   tag: "master"
   workers: 2
+  use_mock_model: true
 
 proxy:
   host: localhost

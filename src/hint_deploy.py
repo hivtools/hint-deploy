@@ -1,5 +1,4 @@
 import docker
-import getpass
 import math
 import re
 import requests
@@ -29,6 +28,8 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
+        self.hintr_use_mock_model = config.config_boolean(
+            dat, ["hintr", "use_mock_model"], True, False)
 
         self.hint_email_password = config.config_string(
             dat, ["hint", "email", "password"], True, "")
@@ -41,6 +42,8 @@ class HintConfig:
         self.proxy_port_https = config.config_integer(dat,
                                                       ["proxy", "port_https"],
                                                       True, 443)
+        self.proxy_url = proxy_url(self.proxy_host, self.proxy_port_https)
+
         self.proxy_ssl_certificate = config.config_string(
             dat, ["proxy", "ssl", "certificate"], True)
         self.proxy_ssl_key = config.config_string(
@@ -77,6 +80,8 @@ def hint_constellation(cfg):
     hintr_args = ["--workers=0"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
+    if cfg.hintr_use_mock_model:
+        hintr_env["USE_MOCK_MODEL"] = "true"
     hintr = constellation.ConstellationContainer(
         "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
         environment=hintr_env)
@@ -123,8 +128,8 @@ def hint_user(cfg, action, email, pull, password=None):
     if pull or not docker_util.image_exists(str(ref)):
         docker_util.image_pull("hint cli", str(ref))
     args = [action, email]
-    if action == "add-user":
-        args.append(password or getpass.getpass())
+    if action == "add-user" and password:
+        args.append(password)
     client = docker.client.from_env()
     mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
                                  read_only=True)]
@@ -151,7 +156,7 @@ def db_configure(container, cfg):
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
     config = {
-        "application_url": "http://hint:8080",
+        "application_url": cfg.proxy_url,
         # drop (start)
         "email_server": "smtp.cc.ic.ac.uk",
         "email_port": 587,
@@ -198,3 +203,10 @@ def wait(f, message, timeout=30, poll=0.1):
             pass
         time.sleep(poll)
     raise Exception(message)
+
+
+def proxy_url(host, port):
+    if port == 443:
+        return "https://{}".format(host)
+    else:
+        return "https://{}:{}".format(host, port)
