@@ -24,6 +24,7 @@ Usage:
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
+  ./hint upgrade (hintr|all)
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
