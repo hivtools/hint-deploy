@@ -144,8 +144,9 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image db" in p
-    assert "Removing 'redis'" in p
-    assert "Starting hintr" redis p
+    assert "Stop 'redis'" in p
+    assert "Removing 'redis'"  in p
+    assert "Starting redis" in p
 
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
