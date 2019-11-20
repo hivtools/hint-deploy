@@ -83,6 +83,8 @@ def test_start_hint():
 
 
 def test_start_hint_from_cli():
+    if os.path.exists("config/.last_deploy"):
+        os.remove("config/.last_deploy")
     hint_cli.main(["start"])
     res = requests.get("http://localhost:8080")
     assert res.status_code == 200
