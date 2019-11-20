@@ -5,12 +5,22 @@
 
 Deployment scripts for [hint](https://github.com/mrc-ide/hint)
 
+## Installation
+
+Clone the repo anywhere and install dependencies with (from the repo root):
+
+```
+pip3 install --user -r requirements.txt
+```
+
+## Usage
+
 <!-- Regenerate the usage section below by running ./scripts/build_readme -->
 
 <!-- Usage begin -->
 ```
 Usage:
-  ./hint start [--pull]
+  ./hint start [--pull] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
@@ -25,6 +35,8 @@ Options:
   --kill           Kill the containers (faster, but possible db corruption)
 ```
 <!-- Usage end -->
+
+Once a configuration is set during `start`, it will be reused by subsequent commands (`stop`, `status`, `upgrade`, `user`, etc) and removed during `destroy`.  The configuration usage information is stored in `config/.last_deploy`.
 
 ## Simulate slow connections
 

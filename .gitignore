@@ -2,3 +2,4 @@ __pycache__
 *.pyc
 constellation
 .coverage
+config/.last_deploy
