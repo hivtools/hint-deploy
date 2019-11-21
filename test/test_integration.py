@@ -7,6 +7,7 @@ import requests
 import time
 
 from contextlib import redirect_stdout
+from unittest import mock
 
 import constellation
 import constellation.docker_util as docker_util
@@ -92,7 +93,9 @@ def test_start_hint_from_cli():
     assert os.path.exists("config/.last_deploy")
     hint_cli.main(["stop"])
     assert os.path.exists("config/.last_deploy")
-    hint_cli.main(["destroy"])
+    with mock.patch('src.hint_cli.prompt_yes_no') as prompt:
+        prompt.return_value = True
+        hint_cli.main(["destroy"])
     assert not os.path.exists("config/.last_deploy")
 
 
