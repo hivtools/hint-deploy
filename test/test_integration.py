@@ -139,6 +139,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert len(docker_util.containers_matching("hint_worker_", True)) == 4
 
     f = io.StringIO()
     with redirect_stdout(f):
@@ -158,3 +159,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+
+    cfg = hint_deploy.HintConfig("config")
+    obj = hint_deploy.hint_constellation(cfg)
+    obj.destroy()
