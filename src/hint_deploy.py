@@ -155,8 +155,6 @@ def hint_upgrade_hintr(obj):
             container.exec_run(["hintr_stop"])
         docker_util.container_remove_wait(container)
 
-    worker.remove(obj.prefix)
-
     obj.start(subset=[hintr.name, worker.name])
 
 
