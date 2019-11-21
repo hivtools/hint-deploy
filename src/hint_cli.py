@@ -98,6 +98,26 @@ def remove_config(path):
         os.unlink(p)
 
 
+def verify_data_loss(action, args, cfg):
+    if action == "stop" and args["remove_volumes"]:
+        if cfg.protect_data:
+            raise Exception("Cannot remove volumes with this configuration")
+        else:
+            print("""WARNING! PROBABLE IRREVERSIBLE DATA LOSS!
+
+You are about to delete the data volumes. This action cannot be undone
+and will result in the irreversible loss of *all* data associated with
+the application. This includes the database, the uploaded files, the
+keypairs used to sign login requests, etc.""")
+
+            if not prompt_yes_no():
+                raise Exception("Not continuing")
+
+
+def prompt_yes_no(get_input=input):
+    return get_input("Continue? [yes/no] ") == "yes"
+
+
 def main(argv=None):
     path, config_name, action, args = parse(argv)
     cfg = load_config(path, config_name)
@@ -105,6 +125,7 @@ def main(argv=None):
         hint_user(cfg, **args)
     else:
         obj = hint_constellation(cfg)
+        verify_data_loss(action, args, cfg)
         obj.__getattribute__(action)(**args)
         if action == "start" and cfg.add_test_user:
             email = "test.user@example.com"
