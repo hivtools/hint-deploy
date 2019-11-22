@@ -153,18 +153,25 @@ def hint_user(cfg, action, email, pull, password=None):
     if pull or not docker_util.image_exists(str(ref)):
         docker_util.image_pull("hint cli", str(ref))
     args = [action, email]
-    if action == "add-user" and password:
-        args.append(password)
+    if action == "add-user":
+        res_exists = hint_user_run(ref, ["user-exists", email], cfg)
+        if res_exists.endswith("\ntrue"):
+            print("Not adding user {} as they already exist".format(email))
+            return
+        if password:
+            args.append(password)
+    hint_user_run(ref, args, cfg)
+
+
+def hint_user_run(ref, args, cfg):
     client = docker.client.from_env()
     mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
                                  read_only=True)]
     res = client.containers.run(str(ref), args, network=cfg.network,
                                 mounts=mounts, remove=True, detach=False)
-    # clean up output for printing by stripping the Spring banner and
-    # preventing too many newlines
-    output = res.decode("UTF-8")
-    pat = ".*?:: Spring Boot ::[^\n]+\n+"
-    print(re.sub(pat, "", output, re.DOTALL, re.S).rstrip())
+    output = res.decode("UTF-8").rstrip()
+    print(output)
+    return output
 
 
 def db_configure(container, cfg):

@@ -53,6 +53,13 @@ def test_start_hint():
 
     f = io.StringIO()
     with redirect_stdout(f):
+        hint_deploy.hint_user(cfg, "add-user", user, True, "password")
+
+    p = f.getvalue()
+    assert "Not adding user {} as they already exist".format(user) in p
+
+    f = io.StringIO()
+    with redirect_stdout(f):
         hint_deploy.hint_user(cfg, "remove-user", user, False)
 
     assert f.getvalue() == "Removing user {}\nOK\n".format(user)
