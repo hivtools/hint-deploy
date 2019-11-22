@@ -33,8 +33,7 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_1")
-    assert docker_util.container_exists("hint_worker_2")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
 
     # Some basic user management
     user = "test@example.com"
@@ -79,8 +78,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
-    assert not docker_util.container_exists("hint_worker_1")
-    assert not docker_util.container_exists("hint_worker_2")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
 
 
 def test_start_hint_from_cli():
@@ -121,3 +119,50 @@ def test_configure_proxy():
     assert docker_util.string_from_container(
         container, "/run/proxy/key.pem") == key
     container.kill()
+
+
+def test_update_hintr_and_all():
+    hint_cli.main(["start"])
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_cli.main(["upgrade", "hintr"])
+
+    p = f.getvalue()
+    assert "Pulling docker image hintr" in p
+    assert "Stopping previous hintr and workers" in p
+    assert "Starting hintr" in p
+    assert "Starting *service* worker" in p
+
+    assert docker_util.network_exists("hint_nw")
+    assert docker_util.volume_exists("hint_db_data")
+    assert docker_util.volume_exists("hint_uploads")
+    assert docker_util.container_exists("hint_db")
+    assert docker_util.container_exists("hint_redis")
+    assert docker_util.container_exists("hint_hintr")
+    assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert len(docker_util.containers_matching("hint_worker_", True)) == 4
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_cli.main(["upgrade", "all"])
+
+    p = f.getvalue()
+    assert "Pulling docker image db" in p
+    assert "Stop 'redis'" in p
+    assert "Removing 'redis'" in p
+    assert "Starting redis" in p
+
+    assert docker_util.network_exists("hint_nw")
+    assert docker_util.volume_exists("hint_db_data")
+    assert docker_util.volume_exists("hint_uploads")
+    assert docker_util.container_exists("hint_db")
+    assert docker_util.container_exists("hint_redis")
+    assert docker_util.container_exists("hint_hintr")
+    assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+
+    cfg = hint_deploy.HintConfig("config")
+    obj = hint_deploy.hint_constellation(cfg)
+    obj.destroy()

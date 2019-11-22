@@ -4,6 +4,7 @@ Usage:
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
+  ./hint upgrade (hintr|all)
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
@@ -22,7 +23,11 @@ import pickle
 import time
 import timeago
 
-from src.hint_deploy import HintConfig, hint_constellation, hint_user
+from src.hint_deploy import \
+    HintConfig, \
+    hint_constellation, \
+    hint_upgrade_hintr, \
+    hint_user
 
 
 def parse(argv=None):
@@ -46,6 +51,13 @@ def parse(argv=None):
     elif dat["status"]:
         action = "status"
         args = {}
+    elif dat["upgrade"]:
+        if dat["hintr"]:
+            action = "upgrade_hintr"
+            args = {}
+        else:
+            action = "restart"
+            args = {"pull_images": True}
     elif dat["user"]:
         action = "user"
         if dat["add"]:
@@ -123,16 +135,21 @@ def main(argv=None):
     cfg = load_config(path, config_name)
     if action == "user":
         hint_user(cfg, **args)
+    elif action == "upgrade_hintr":
+        hint_upgrade_hintr(hint_constellation(cfg))
     else:
         obj = hint_constellation(cfg)
         verify_data_loss(action, args, cfg)
         obj.__getattribute__(action)(**args)
+
         if action == "start" and cfg.add_test_user:
             email = "test.user@example.com"
             pull = args["pull_images"]
             print("Adding test user '{}'".format(email))
             hint_user(cfg, "add-user", email, pull, "password")
+
         if action == "start":
             save_config(path, config_name, cfg)
+
         if action == "stop" and args["remove_volumes"]:
             remove_config(path)
