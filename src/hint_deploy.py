@@ -130,13 +130,7 @@ def hint_upgrade(obj, what):
     if what == "hintr":
         hint_upgrade_hintr(obj)
     else:
-        hint_upgrade_all(obj)
-
-
-def hint_upgrade_all(obj):
-    obj.containers.pull_images()
-    obj.stop()
-    obj.start()
+        obj.restart(pull_images=True)
 
 
 def hint_upgrade_hintr(obj):
