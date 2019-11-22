@@ -47,9 +47,9 @@ def test_cli_parse():
                                   "pull": False, password: None})
 
     assert hint_cli.parse(["upgrade", "hintr"]) == \
-        ("config", None, "upgrade", {"what": "hintr"})
+        ("config", None, "upgrade_hintr", {})
     assert hint_cli.parse(["upgrade", "all"]) == \
-        ("config", None, "upgrade", {"what": "all"})
+        ("config", None, "restart", {"pull_images": True})
 
 
 def test_user_args_passed_to_hint_user():

@@ -129,13 +129,6 @@ def hint_constellation(cfg):
     return obj
 
 
-def hint_upgrade(obj, what):
-    if what == "hintr":
-        hint_upgrade_hintr(obj)
-    else:
-        obj.restart(pull_images=True)
-
-
 def hint_upgrade_hintr(obj):
     hintr = obj.containers.find("hintr")
     worker = obj.containers.find("worker")

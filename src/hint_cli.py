@@ -26,7 +26,7 @@ import timeago
 from src.hint_deploy import \
     HintConfig, \
     hint_constellation, \
-    hint_upgrade, \
+    hint_upgrade_hintr, \
     hint_user
 
 
@@ -52,8 +52,12 @@ def parse(argv=None):
         action = "status"
         args = {}
     elif dat["upgrade"]:
-        action = "upgrade"
-        args = {"what": "hintr" if dat["hintr"] else "all"}
+        if dat["hintr"]:
+            action = "upgrade_hintr"
+            args = {}
+        else:
+            action = "restart"
+            args = {"pull_images": True}
     elif dat["user"]:
         action = "user"
         if dat["add"]:
@@ -131,14 +135,12 @@ def main(argv=None):
     cfg = load_config(path, config_name)
     if action == "user":
         hint_user(cfg, **args)
+    elif action == "upgrade_hintr":
+        hint_upgrade_hintr(hint_constellation(cfg))
     else:
         obj = hint_constellation(cfg)
         verify_data_loss(action, args, cfg)
-
-        if action == "upgrade":
-            hint_upgrade(obj, args["what"])
-        else:
-            obj.__getattribute__(action)(**args)
+        obj.__getattribute__(action)(**args)
 
         if action == "start" and cfg.add_test_user:
             email = "test.user@example.com"
