@@ -20,3 +20,6 @@ vault:
 
 users:
   add_test_user: false
+
+deploy:
+  protect_data: true

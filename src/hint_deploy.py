@@ -65,6 +65,9 @@ class HintConfig:
         self.add_test_user = config.config_boolean(
             dat, ["users", "add_test_user"], True, False)
 
+        self.protect_data = config.config_boolean(
+            dat, ["deploy", "protect_data"], True, False)
+
 
 def hint_constellation(cfg):
     # 1. The db
