@@ -127,7 +127,7 @@ keypairs used to sign login requests, etc.""")
 
 
 def prompt_yes_no(get_input=input):
-    return get_input("Continue? [yes/no] ") == "yes"
+    return get_input("\nContinue? [yes/no] ") == "yes"
 
 
 def main(argv=None):
