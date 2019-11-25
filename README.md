@@ -53,7 +53,29 @@ The bandwidth and latency of the connection will be affected - see `./scripts/sl
 
 ## Proxy & SSL
 
-For now, we're going to use self-signed certificates for `naomi.dide.ic.ac.uk`, which we will replace with more reasonable certificates later.  Certificates are generated during start-up of the proxy container.
+There are 3 options for ssl certificates
+
+1. Self-signed certificates, which are generated in the proxy at startup (this is the default configuration option)
+2. Certificates for `naomi.dide.ic.ac.uk`, provided by ICT (see [details on `reside-ic/proxy-nginx`](https://github.com/reside-ic/proxy-nginx#getting-a-certificate-from-ict)), stored in the mrc-ide vault
+3. Certificates from UNAIDS
+
+For the last option, UNAIDS will send a certificate.  Instructions are [on the leaderssl website](https://www.leaderssl.com/articles/131-certificate-installation-nginx)
+
+First, concatenate the certificates:
+
+```
+cat naomi_unaids_org.crt  naomi_unaids_org.ca-bundle > ssl-bundle.crt
+```
+
+Then add them to the [mrc-ide vault](https://github.com/mrc-ide/vault):
+
+```
+export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
+vault login -method=github
+vault write /secret/hint/ssl/unaids certificate=@ssl-bundle.crt key=@naomi.key
+```
+
+The production configuration will read these in.
 
 ## License
 
