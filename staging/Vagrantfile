@@ -2,7 +2,7 @@ Vagrant.require_version ">= 1.8.2"
 
 domain = 'localdomain'
 box = "bento/ubuntu-18.04"
-ram_size_mb = '16384'
+ram_size_mb = '32768'
 
 Vagrant.configure(2) do |config|
   config.vm.box = box
