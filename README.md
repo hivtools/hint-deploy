@@ -102,6 +102,16 @@ On machine reboot, hint will not restart automatically ([mrc-735](https://vimc.m
 
 if it has already been run you do not need to provide the instance name (staging or production) though adding it is harmless.  You will be prompted for your github token during startup.
 
+If you are restarting hint after a machine reboot, some containers will still exist (though they are exited) and you will get an error like:
+
+```
+[Loaded configuration 'staging' (2 days ago)]
+...
+Exception: Some containers exist
+```
+
+in which case you should run `docker container prune` or `./hint stop` to remove the stopped containers and let you run `./hint start` again.
+
 If you want to update images at the same time, run
 
 ```
