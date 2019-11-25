@@ -95,7 +95,7 @@ def test_start_hint_from_cli():
     # Need a dummy extra configuration file that does not trigger the
     # vault
     with open("config/other.yml", "w") as f:
-        f.write("proxy:\n host: localhost");
+        f.write("proxy:\n host: localhost")
 
     hint_cli.main(["start", "other"])
     res = requests.get("http://localhost:8080")
