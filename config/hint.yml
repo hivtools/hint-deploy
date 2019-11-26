@@ -11,13 +11,13 @@ hint:
     uploads: "hint_uploads"
     config: "hint_config"
   expose: true
-  use_mock_model: false
 
 hintr:
   tag: "master"
   workers: 2
   volumes:
     results: "hint_results"
+  use_mock_model: false
 
 proxy:
   host: localhost
