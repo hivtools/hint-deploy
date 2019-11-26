@@ -150,6 +150,15 @@ The bandwidth and latency of the connection will be affected - see `./scripts/sl
 
 For now, we're going to use self-signed certificates for `naomi.dide.ic.ac.uk`, which we will replace with more reasonable certificates later.  Certificates are generated during start-up of the proxy container.
 
+## Modifying deploy
+
+By default `hint` will deploy with docker containers built off the `master` image. If you want to deploy using an image from a particular branch for testing you can do this by modifying the `tag` section `config/hint.yml` file.
+
+Images available on the remote are tagged with
+* `hintr` - branch name e.g. `mrc-745`, git hash e.g. `56c3b7f`, version number e.g. `v0.0.15`
+* `hint`- branch name e.g. `mrc-745`, git hash e.g. `6125a71`
+
+
 ## License
 
 MIT © Imperial College of Science, Technology and Medicine
