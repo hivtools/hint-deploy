@@ -15,7 +15,9 @@ hint:
 hintr:
   tag: "master"
   workers: 2
-  use_mock_model: true
+  volumes:
+    results: "hint_results"
+  use_mock_model: false
 
 proxy:
   host: localhost
