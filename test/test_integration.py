@@ -91,17 +91,30 @@ def test_start_hint():
 def test_start_hint_from_cli():
     if os.path.exists("config/.last_deploy"):
         os.remove("config/.last_deploy")
-    hint_cli.main(["start"])
+
+    # Need a dummy extra configuration file that does not trigger the
+    # vault
+    with open("config/other.yml", "w") as f:
+        f.write("proxy:\n host: localhost")
+
+    hint_cli.main(["start", "other"])
     res = requests.get("http://localhost:8080")
     assert res.status_code == 200
     assert "Login" in res.content.decode("UTF-8")
     assert os.path.exists("config/.last_deploy")
-    hint_cli.main(["stop"])
+    assert hint_cli.read_config("config")["config_name"] == "other"
+    hint_cli.main(["stop", "--kill"])
     assert os.path.exists("config/.last_deploy")
+    assert hint_cli.read_config("config")["config_name"] == "other"
+    hint_cli.main(["start"])
+    assert os.path.exists("config/.last_deploy")
+    assert hint_cli.read_config("config")["config_name"] == "other"
+
     with mock.patch('src.hint_cli.prompt_yes_no') as prompt:
         prompt.return_value = True
         hint_cli.main(["destroy"])
     assert not os.path.exists("config/.last_deploy")
+    os.remove("config/other.yml")
 
 
 # this checks that specifying the ssl certificates in the

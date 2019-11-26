@@ -96,11 +96,12 @@ def load_config(path, config_name=None):
         dat = read_config(path)
         when = timeago.format(dat["time"])
         cfg = HintConfig(path, dat["config_name"])
+        config_name = dat["config_name"]
         print("[Loaded configuration '{}' ({})]".format(
-            dat["config_name"] or "<base>", when))
+            config_name or "<base>", when))
     else:
         cfg = HintConfig(path, config_name)
-    return cfg
+    return config_name, cfg
 
 
 def remove_config(path):
@@ -132,7 +133,7 @@ def prompt_yes_no(get_input=input):
 
 def main(argv=None):
     path, config_name, action, args = parse(argv)
-    cfg = load_config(path, config_name)
+    config_name, cfg = load_config(path, config_name)
     if action == "user":
         hint_user(cfg, **args)
     elif action == "upgrade_hintr":

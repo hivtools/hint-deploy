@@ -26,5 +26,10 @@ def test_load_and_reload_config():
     cfg = hint_deploy.HintConfig(path, config)
     cfg.hint_tag = "develop"
     hint_cli.save_config(path, config, cfg)
-    assert hint_cli.load_config(path, None).hint_tag == "master"
+
+    hint_cli.read_config(path)
+
+    config_name, config_value = hint_cli.load_config(path, None)
+    assert config_value.hint_tag == "master"
+    assert config_name == "production"
     hint_cli.remove_config(path)
