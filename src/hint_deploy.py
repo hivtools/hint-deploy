@@ -61,7 +61,7 @@ class HintConfig:
             "config": config.config_string(
                 dat, ["hint", "volumes", "config"]),
             "results": config.config_string(
-                dat, ["hintr", "volumes", "results"],
+                dat, ["hintr", "volumes", "results"]),
             "prerun": config.config_string(
                 dat, ["hintr", "volumes", "prerun"])
         }
