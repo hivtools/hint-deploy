@@ -61,7 +61,9 @@ class HintConfig:
             "config": config.config_string(
                 dat, ["hint", "volumes", "config"]),
             "results": config.config_string(
-                dat, ["hintr", "volumes", "results"])
+                dat, ["hintr", "volumes", "results"],
+            "prerun": config.config_string(
+                dat, ["hintr", "volumes", "prerun"])
         }
         self.vault = config.config_vault(dat, ["vault"])
         self.add_test_user = config.config_boolean(
@@ -88,7 +90,8 @@ def hint_constellation(cfg):
     hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
-                    constellation.ConstellationMount("results", "/results")]
+                    constellation.ConstellationMount("results", "/results"),
+                    constellation.ConstellationMount("prerun", "/prerun")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
