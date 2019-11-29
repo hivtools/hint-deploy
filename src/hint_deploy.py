@@ -88,7 +88,9 @@ def hint_constellation(cfg):
 
     # 3. hintr
     hintr_ref = cfg.hintr_ref
-    hintr_args = ["--workers=0"]
+    hintr_args = ["--workers=0",
+                  "--results-dir=/results",
+                  "--prerun-dir=/prerun"]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
                     constellation.ConstellationMount("results", "/results"),
                     constellation.ConstellationMount("prerun", "/prerun")]
