@@ -13,7 +13,7 @@ hint:
   expose: true
 
 hintr:
-  tag: "mrc-1155"
+  tag: "master"
   workers: 2
   volumes:
     results: "hint_results"
