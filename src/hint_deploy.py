@@ -141,6 +141,7 @@ def hint_upgrade_hintr(obj):
     hintr = obj.containers.find("hintr")
     worker = obj.containers.find("worker")
     container = hintr.get(obj.prefix)
+    obj.resolve_secrets()
 
     # Always pull the docker image - and do this *before* we start
     # removing things to minimise downtime.
