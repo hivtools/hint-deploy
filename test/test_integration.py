@@ -26,6 +26,10 @@ def test_start_hint():
     assert res.status_code == 200
     assert "Login" in res.content.decode("UTF-8")
 
+    res = requests.get("http://localhost:8888")
+
+    assert res.status_code == 200
+
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
     assert docker_util.volume_exists("hint_uploads")
