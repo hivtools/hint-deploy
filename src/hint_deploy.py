@@ -97,9 +97,10 @@ def hint_constellation(cfg):
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
+    hintr_ports = [8888] if cfg.hint_expose else None
     hintr = constellation.ConstellationContainer(
         "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
-        environment=hintr_env)
+        ports=hintr_ports, environment=hintr_env)
 
     # 4. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
