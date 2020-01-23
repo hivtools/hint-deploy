@@ -174,6 +174,14 @@ def test_update_hintr_and_all():
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 4
 
+    # We are going to write some data into redis here and later check
+    # that it survived the upgrade.
+    cfg = hint_deploy.HintConfig("config")
+    obj = hint_deploy.hint_constellation(cfg)
+    args_set = ["redis-cli", "SET", "data_persists", "yes"]
+    redis = obj.containers.get("redis", obj.prefix)
+    docker_util.exec_safely(redis, args_set)
+
     f = io.StringIO()
     with redirect_stdout(f):
         hint_cli.main(["upgrade", "all"])
@@ -195,6 +203,9 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_hint")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
 
-    cfg = hint_deploy.HintConfig("config")
-    obj = hint_deploy.hint_constellation(cfg)
+    redis = obj.containers.get("redis", obj.prefix)
+    args_get = ["redis-cli", "GET", "data_persists"]
+    result = docker_util.exec_safely(redis, args_get).output.decode("UTF-8")
+    assert "yes" in result
+
     obj.destroy()

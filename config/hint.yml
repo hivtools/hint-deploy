@@ -1,5 +1,6 @@
 redis:
   tag: "5.0"
+  volume: "hint_redis_data"
 
 db:
   tag: master
