@@ -204,6 +204,7 @@ def test_update_hintr_and_all():
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
 
     redis = obj.containers.get("redis", obj.prefix)
+    args_get = ["redis-cli", "GET", "data_persists"]
     result = docker_util.exec_safely(redis, args_get).output.decode("UTF-8")
     assert "yes" in result
 
