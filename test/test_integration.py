@@ -174,8 +174,8 @@ def test_update_hintr_and_all():
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 4
 
-    ## We are going to write some data into redis here and later check
-    ## that it survived the upgrade.
+    # We are going to write some data into redis here and later check
+    # that it survived the upgrade.
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
     args_set = ["redis-cli", "SET", "data_persists", "yes"]
