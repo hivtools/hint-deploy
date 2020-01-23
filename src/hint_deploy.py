@@ -56,6 +56,8 @@ class HintConfig:
         self.volumes = {
             "db": config.config_string(
                 dat, ["db", "volume"]),
+            "redis": config.config_string(
+                dat, ["redis", "volume"]),
             "uploads": config.config_string(
                 dat, ["hint", "volumes", "uploads"]),
             "config": config.config_string(
@@ -84,7 +86,10 @@ def hint_constellation(cfg):
     # 2. Redis
     redis_ref = constellation.ImageReference("library", "redis",
                                              cfg.redis_tag)
-    redis = constellation.ConstellationContainer("redis", redis_ref)
+    redis_mounts = [constellation.ConstellationMount("redis", "/data")]
+    redis_args = ["--appendonly", "yes"]
+    redis = constellation.ConstellationContainer(
+        "redis", redis_ref, mounts=redis_mounts, args=redis_args)
 
     # 3. hintr
     hintr_ref = cfg.hintr_ref
