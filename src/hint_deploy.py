@@ -118,7 +118,7 @@ def hint_constellation(cfg):
         configure=hint_configure)
 
     # 5. proxy
-    proxy_ref = constellation.ImageReference("reside", "proxy-nginx", "latest")
+    proxy_ref = constellation.ImageReference("reside", "proxy-nginx", "mrc-1628")
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
                   cfg.proxy_host,
