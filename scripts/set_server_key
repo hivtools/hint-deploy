@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 
 export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
-vault login -method=github
-
 VAULT_KEY=/secret/hint/server/key
 
-if [[ $(vault list $VAULT_KEY 2>&1 > /dev/null) ]]; then
-    echo "Key already present: type 'replace' to replace it"
+echo "Authenticating with vault"
+vault login -method=github
+
+echo "Testing if key present in the vault"
+if vault read $VAULT_KEY 2>&1 > /dev/null; then
+    echo -n "Key already present in vault: replace? [yes/No]"
     read REPLACE
-    if [[ REPLACE != "replace" ]]; then
+    if [[ REPLACE != "yes" ]]; then
         echo "Not replacing existing key"
         exit 1
     fi
@@ -16,7 +18,7 @@ else
     echo "Generating new key"
 fi
 
-echo "We need sudo access in order to delete the key we're about to generate"
+echo "We need sudo access in order to delete the file we're about to generate"
 echo "Please authenticate"
 sudo true
 
