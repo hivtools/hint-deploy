@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+export VAULT_ADDR=https://vault.dide.ic.ac.uk:8200
+vault login -method=github
+
+VAULT_KEY=/secret/hint/server/key
+
+if [[ $(vault list $VAULT_KEY 2>&1 > /dev/null) ]]; then
+    echo "Key already present: type 'replace' to replace it"
+    read REPLACE
+    if [[ REPLACE != "replace" ]]; then
+        echo "Not replacing existing key"
+        exit 1
+    fi
+else
+    echo "Generating new key"
+fi
+
+echo "We need sudo access in order to delete the key we're about to generate"
+echo "Please authenticate"
+sudo true
+
+mkdir -p workspace
+docker run --rm \
+       -v $PWD/workspace:/workspace \
+       docker.montagu.dide.ic.ac.uk:5000/montagu-cert-tool:master \
+       gen-keypair /workspace
+sudo chown -R $USER workspace
+
+vault write $VAULT_KEY \
+      public=@workspace/public_key.der \
+      private=@workspace/private_key.der
+
+rm -rf workspace
