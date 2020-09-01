@@ -8,12 +8,13 @@ vault login -method=github
 
 echo "Testing if key present in the vault"
 if vault read $VAULT_KEY 2>&1 > /dev/null; then
-    echo -n "Key already present in vault: replace? [yes/No]"
+    echo -n "Key already present in vault: replace? [yes/No] "
     read REPLACE
-    if [[ REPLACE != "yes" ]]; then
+    if [[ $REPLACE != "yes" ]]; then
         echo "Not replacing existing key"
         exit 1
     fi
+    echo "Replacing existing key"
 else
     echo "Generating new key"
 fi
