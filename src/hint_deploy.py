@@ -25,6 +25,9 @@ class HintConfig:
                                              True, default_tag)
         self.hint_expose = config.config_boolean(dat, ["hint", "expose"],
                                                  True, False)
+
+        self.hint_keypair = keypair(dat, ["hint", "key"])
+
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
@@ -226,6 +229,11 @@ def db_configure(container, cfg):
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
     docker_util.exec_safely(container, ["mkdir", "-p", "/etc/hint/token_key"])
+    if cfg.hint_keypair:
+        docker_util.bytes_into_container(cfg.hint_keypair["private"],
+                                         "/etc/hint/token_key/private_key.der")
+        docker_util.bytes_into_container(cfg.hint_keypair["public"],
+                                         "/etc/hint/token_key/public_key.der")
     config = {
         "application_url": cfg.proxy_url,
         # drop (start)
@@ -285,3 +293,17 @@ def proxy_url(host, port):
         return "https://{}".format(host)
     else:
         return "https://{}:{}".format(host, port)
+
+
+def keypair(dat, path):
+    path_public = path + ["public"]
+    path_private = path + ["private"]
+    public = config.config_string(dat, path_public, True, None)
+    private = config.config_string(dat, path_private, True, None)
+
+    if public and private:
+        return {"public": public, "private": private}
+    if not public and not private:
+        return None
+    raise Exception("Provide either both or neither '{}' and '{}'".format(
+        ":".join(path_public), ":".join(path_private)))
