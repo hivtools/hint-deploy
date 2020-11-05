@@ -39,6 +39,8 @@ class HintConfig:
         self.hint_email_password = config.config_string(
             dat, ["hint", "email", "password"], True, "")
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
+        self.hint_adr_url = config.config_string(
+            dat, ["hint", "adr_url"], True)
 
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
@@ -217,6 +219,10 @@ def hint_configure(container, cfg):
         "db_url": "jdbc:postgresql://db/hint",
         "db_password": "changeme"
     }
+
+    if cfg.hint_adr_url is not None:
+        config["adr_url"] = cfg.hint_adr_url
+
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
                                       "/etc/hint/config.properties")

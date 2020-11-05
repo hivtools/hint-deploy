@@ -1,6 +1,16 @@
 from src import hint_cli, hint_deploy
 
 
+def test_production_uses_real_adr():
+    cfg = hint_deploy.HintConfig("config", "production")
+    assert cfg.hint_adr_url == "https://https://adr.unaids.org/"
+
+
+def test_real_adr_optional():
+    cfg = hint_deploy.HintConfig("config")
+    assert cfg.hint_adr_url is None
+
+
 def test_production_and_staging_use_real_email_configuration():
     cfg = hint_deploy.HintConfig("config", "production")
     assert cfg.hint_email_mode == "real"

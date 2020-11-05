@@ -1,4 +1,5 @@
 hint:
+  adr_url: https://https://adr.unaids.org/
   email:
     password: VAULT:secret/hint/email:password
 
