@@ -3,3 +3,4 @@ __pycache__
 constellation
 .coverage
 config/.last_deploy
+.idea
