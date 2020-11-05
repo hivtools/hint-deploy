@@ -24,7 +24,7 @@ def test_start_hint():
     res = requests.get("http://localhost:8080")
 
     assert res.status_code == 200
-    assert "Login" in res.content.decode("UTF-8")
+    assert "Naomi" in res.content.decode("UTF-8")
 
     res = requests.get("http://localhost:8888")
 
@@ -108,7 +108,7 @@ def test_start_hint_from_cli():
     hint_cli.main(["start", "other"])
     res = requests.get("http://localhost:8080")
     assert res.status_code == 200
-    assert "Login" in res.content.decode("UTF-8")
+    assert "Naomi" in res.content.decode("UTF-8")
     assert os.path.exists("config/.last_deploy")
     assert hint_cli.read_config("config")["config_name"] == "other"
     hint_cli.main(["stop", "--kill"])
