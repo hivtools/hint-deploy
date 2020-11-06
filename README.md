@@ -1,6 +1,6 @@
 # hint-deploy
 
-[![Build Status](https://travis-ci.org/mrc-ide/hint-deploy.svg?branch=master)](https://travis-ci.org/mrc-ide/hint-deploy)
+[![Build status](https://github.com/hint/hint-deploy/workflows/test/badge.svg)](https://github.com/hint/hint-deploy/actions)
 [![codecov.io](https://codecov.io/github/mrc-ide/hint-deploy/coverage.svg?branch=master)](https://codecov.io/github/mrc-ide/hint-deploy?branch=master)
 
 Deployment scripts for [hint](https://github.com/mrc-ide/hint)

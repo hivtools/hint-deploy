@@ -1,0 +1,44 @@
+on:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+name: Tests
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Install dependencies
+        # https://docs.github.com/en/free-pro-team@latest/actions/guides/building-and-testing-python#installing-dependencies
+        # If installing a development version of constellation, use:
+        # - pip3 install git+https://github.com/reside-ic/constellation@reside-62#egg=constellation
+        run: |
+          python -m pip install --upgrade setuptools pip wheel
+          pip3 install pytest-cov pycodestyle codecov
+          pip3 install -r requirements.txt
+
+      - name: Tests
+        run: |
+          pytest --cov=src
+
+      - name: Lint
+        run: |
+          pycodestyle .
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
