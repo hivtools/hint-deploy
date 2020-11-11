@@ -3,7 +3,7 @@ from src import hint_cli, hint_deploy
 
 def test_production_uses_real_adr():
     cfg = hint_deploy.HintConfig("config", "production")
-    assert cfg.hint_adr_url == "https://https://adr.unaids.org/"
+    assert cfg.hint_adr_url == "https://adr.unaids.org/"
 
 
 def test_real_adr_optional():
