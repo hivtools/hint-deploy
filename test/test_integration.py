@@ -19,13 +19,7 @@ def test_start_hint():
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
-
-    f = io.StringIO()
-    with redirect_stdout(f):
-        obj.start()
-    p = f.getvalue()
-
-    assert "Pulling docker image db-migrate" in p
+    obj.start()
 
     res = requests.get("http://localhost:8080")
 
@@ -164,6 +158,7 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image hintr" in p
+    assert "Pulling docker image db-migrate" not in p
     assert "Stopping previous hintr and workers" in p
     assert "Starting hintr" in p
     assert "Starting *service* worker" in p
@@ -214,5 +209,28 @@ def test_update_hintr_and_all():
     args_get = ["redis-cli", "GET", "data_persists"]
     result = docker_util.exec_safely(redis, args_get).output.decode("UTF-8")
     assert "yes" in result
+
+    obj.destroy()
+
+def test_start_pulls_db_migrate():
+    cfg = hint_deploy.HintConfig("config")
+    obj = hint_deploy.hint_constellation(cfg)
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_deploy.hint_start(obj, cfg, {"pull_images": True})
+    p = f.getvalue()
+
+    assert "Pulling docker image db-migrate" in p
+
+    obj.destroy()
+
+    ## Start without --pull doesn't pull migrate image
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_deploy.hint_start(obj, cfg, {"pull_images": False})
+    p = f.getvalue()
+
+    assert "Pulling docker image db-migrate" not in p
 
     obj.destroy()

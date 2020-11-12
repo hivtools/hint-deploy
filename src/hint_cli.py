@@ -26,7 +26,9 @@ import timeago
 from src.hint_deploy import \
     HintConfig, \
     hint_constellation, \
+    hint_start, \
     hint_upgrade_hintr, \
+    hint_upgrade_all, \
     hint_user
 
 
@@ -56,8 +58,8 @@ def parse(argv=None):
             action = "upgrade_hintr"
             args = {}
         else:
-            action = "restart"
-            args = {"pull_images": True}
+            action = "upgrade_all"
+            args = {}
     elif dat["user"]:
         action = "user"
         if dat["add"]:
@@ -134,23 +136,21 @@ def prompt_yes_no(get_input=input):
 def main(argv=None):
     path, config_name, action, args = parse(argv)
     config_name, cfg = load_config(path, config_name)
+    obj = hint_constellation(cfg)
     if action == "user":
         hint_user(cfg, **args)
     elif action == "upgrade_hintr":
-        hint_upgrade_hintr(hint_constellation(cfg))
+        hint_upgrade_hintr(obj)
+    elif action == "upgrade_all":
+        verify_data_loss(action, args, cfg)
+        hint_upgrade_all(obj, cfg.db_tag)
+    elif action == "start":
+        verify_data_loss(action, args, cfg)
+        hint_start(obj, cfg, args)
+        save_config(path, config_name, cfg)
     else:
-        obj = hint_constellation(cfg)
         verify_data_loss(action, args, cfg)
         obj.__getattribute__(action)(**args)
-
-        if action == "start" and cfg.add_test_user:
-            email = "test.user@example.com"
-            pull = args["pull_images"]
-            print("Adding test user '{}'".format(email))
-            hint_user(cfg, "add-user", email, pull, "password")
-
-        if action == "start":
-            save_config(path, config_name, cfg)
 
         if action == "stop" and args["remove_volumes"]:
             remove_config(path)
