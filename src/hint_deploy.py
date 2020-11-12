@@ -26,7 +26,16 @@ class HintConfig:
         self.hint_expose = config.config_boolean(dat, ["hint", "expose"],
                                                  True, False)
 
-        self.hint_keypair = keypair(dat, ["hint", "key"])
+        hint_keypair = keypair(dat, ["hint", "key"])
+        if hint_keypair:
+            # For constellation to resolve secrets here, these must be
+            # at the top level of the object (it does not recurse into
+            # object or dict members)
+            self.hint_key_public = hint_keypair["public"]
+            self.hint_key_private = hint_keypair["private"]
+        else:
+            self.hint_key_public = None
+            self.hint_key_private = None
 
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
@@ -229,11 +238,13 @@ def db_configure(container, cfg):
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
     docker_util.exec_safely(container, ["mkdir", "-p", "/etc/hint/token_key"])
-    if cfg.hint_keypair:
-        docker_util.bytes_into_container(cfg.hint_keypair["private"],
-                                         "/etc/hint/token_key/private_key.der")
-        docker_util.bytes_into_container(cfg.hint_keypair["public"],
-                                         "/etc/hint/token_key/public_key.der")
+    if cfg.hint_key_private:
+        docker_util.string_into_container(
+            cfg.hint_key_private, container,
+            "/etc/hint/token_key/private_key.der")
+        docker_util.string_into_container(
+            cfg.hint_key_public, container,
+            "/etc/hint/token_key/public_key.der")
     config = {
         "application_url": cfg.proxy_url,
         # drop (start)
