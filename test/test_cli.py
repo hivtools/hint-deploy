@@ -49,7 +49,7 @@ def test_cli_parse():
     assert hint_cli.parse(["upgrade", "hintr"]) == \
         ("config", None, "upgrade_hintr", {})
     assert hint_cli.parse(["upgrade", "all"]) == \
-        ("config", None, "restart", {"pull_images": True})
+        ("config", None, "upgrade_all", {})
 
 
 def test_user_args_passed_to_hint_user():
@@ -60,6 +60,20 @@ def test_user_args_passed_to_hint_user():
     assert f.called
     assert f.call_args[1] == {"email": email, "action": "add-user",
                               "pull": False, "password": None}
+
+
+def test_args_passed_to_start():
+    with mock.patch('src.hint_cli.hint_start') as f:
+        hint_cli.main(["start", "staging"])
+
+    assert f.called
+    assert f.call_args[0][2] == {"pull_images": False}
+
+    with mock.patch('src.hint_cli.hint_start') as f:
+        hint_cli.main(["start", "staging", "--pull"])
+
+    assert f.called
+    assert f.call_args[0][2] == {"pull_images": True}
 
 
 # This *should* work as far as I can see but I don't see how to make it.
