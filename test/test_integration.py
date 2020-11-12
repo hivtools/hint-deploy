@@ -194,6 +194,7 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image db" in p
+    assert "Pulling docker image db-migrate" in p
     assert "Stop 'redis'" in p
     assert "Removing 'redis'" in p
     assert "Starting redis" in p
