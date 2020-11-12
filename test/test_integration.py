@@ -234,7 +234,7 @@ def test_start_pulls_db_migrate():
 
     assert "Pulling docker image db-migrate" not in p
 
-    obj.destroy()    
+    obj.destroy()
 
 
 def test_configure_adr_keys():
