@@ -25,7 +25,7 @@ def test_start_hint():
         obj.start()
     p = f.getvalue()
 
-    assert "Pulling docker image migrate-db" in p
+    assert "Pulling docker image db-migrate" in p
 
     res = requests.get("http://localhost:8080")
 
