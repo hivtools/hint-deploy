@@ -49,12 +49,14 @@ def test_load_and_reload_config():
 
 def test_production_uses_persistant_keypair():
     cfg = hint_deploy.HintConfig("config", "production")
-    assert cfg.hint_keypair is not None
+    assert cfg.hint_key_public is not None
+    assert cfg.hint_key_private is not None
 
 
 def test_staging_uses_transient_keypair():
     cfg = hint_deploy.HintConfig("config", "staging")
-    assert cfg.hint_keypair is None
+    assert cfg.hint_key_public is None
+    assert cfg.hint_key_private is None
 
 
 def test_keypair_allows_missing_key():
