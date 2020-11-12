@@ -196,6 +196,7 @@ def db_configure(container, cfg):
     print("[db] Migrating the database")
     migrate = constellation.ImageReference(
         "mrcide", "hint-db-migrate", cfg.db_tag)
+    docker_util.image_pull("db-migrate", str(migrate))
     args = ["-url=jdbc:postgresql://{}/hint".format(container.name)]
     container.client.containers.run(str(migrate), args, network=cfg.network,
                                     auto_remove=True, detach=False)

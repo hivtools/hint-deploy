@@ -19,7 +19,13 @@ def test_start_hint():
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
-    obj.start()
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        obj.start()
+    p = f.getvalue()
+
+    assert "Pulling docker image migrate-db" in p
 
     res = requests.get("http://localhost:8080")
 
