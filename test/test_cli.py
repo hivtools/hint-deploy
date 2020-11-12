@@ -61,6 +61,7 @@ def test_user_args_passed_to_hint_user():
     assert f.call_args[1] == {"email": email, "action": "add-user",
                               "pull": False, "password": None}
 
+
 def test_args_passed_to_start():
     with mock.patch('src.hint_cli.hint_start') as f:
         hint_cli.main(["start", "staging"])
@@ -73,6 +74,7 @@ def test_args_passed_to_start():
 
     assert f.called
     assert f.call_args[0][2] == {"pull_images": True}
+
 
 # This *should* work as far as I can see but I don't see how to make it.
 def test_other_args_passed_to_start():

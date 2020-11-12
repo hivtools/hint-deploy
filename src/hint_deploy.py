@@ -144,6 +144,7 @@ def hint_constellation(cfg):
 
     return obj
 
+
 def hint_start(obj, cfg, args):
     if (args["pull_images"]):
         pull_migrate_image(cfg.db_tag)
@@ -154,6 +155,7 @@ def hint_start(obj, cfg, args):
         pull = args["pull_images"]
         print("Adding test user '{}'".format(email))
         hint_user(cfg, "add-user", email, pull, "password")
+
 
 def hint_upgrade_hintr(obj):
     hintr = obj.containers.find("hintr")
@@ -173,14 +175,16 @@ def hint_upgrade_hintr(obj):
 
     obj.start(subset=[hintr.name, worker.name])
 
+
 def hint_upgrade_all(obj, db_tag):
     pull_migrate_image(db_tag)
-    obj.restart(pull_images = True)
+    obj.restart(pull_images=True)
+
 
 def pull_migrate_image(db_tag):
-  migrate = constellation.ImageReference("mrcide",
-          "hint-db-migrate", db_tag)
-  docker_util.image_pull("db-migrate", str(migrate))
+    migrate = constellation.ImageReference("mrcide", "hint-db-migrate", db_tag)
+    docker_util.image_pull("db-migrate", str(migrate))
+
 
 def hint_user(cfg, action, email, pull, password=None):
     ref = constellation.ImageReference("mrcide", "hint-user-cli", cfg.hint_tag)

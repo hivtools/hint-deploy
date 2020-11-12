@@ -212,6 +212,7 @@ def test_update_hintr_and_all():
 
     obj.destroy()
 
+
 def test_start_pulls_db_migrate():
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
@@ -225,7 +226,7 @@ def test_start_pulls_db_migrate():
 
     obj.destroy()
 
-    ## Start without --pull doesn't pull migrate image
+    # Start without --pull doesn't pull migrate image
     f = io.StringIO()
     with redirect_stdout(f):
         hint_deploy.hint_start(obj, cfg, {"pull_images": False})
