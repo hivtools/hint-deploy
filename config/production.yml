@@ -2,9 +2,6 @@ hint:
   adr_url: https://adr.unaids.org/
   email:
     password: VAULT:secret/hint/email:password
-  key:
-    public: VAULT:secret/hint/server/key:public
-    private: VAULT:secret/hint/server/key:private
 
 hintr:
   workers: 9

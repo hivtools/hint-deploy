@@ -235,23 +235,3 @@ def test_start_pulls_db_migrate():
     assert "Pulling docker image db-migrate" not in p
 
     obj.destroy()
-
-
-def test_configure_adr_keys():
-    cfg = hint_deploy.HintConfig("config")
-    with open("key/public_key.der", "rb") as f:
-        cfg.hint_key_public = f.read()
-
-    with open("key/private_key.der", "rb") as f:
-        cfg.hint_key_private = f.read()
-
-    obj = hint_deploy.hint_constellation(cfg)
-    obj.start()
-
-    hint = obj.containers.find("hint").get(obj.prefix)
-    assert docker_util.bytes_from_container(
-        hint, "/etc/hint/token_key/public_key.der") == cfg.hint_key_public
-    assert docker_util.bytes_from_container(
-        hint, "/etc/hint/token_key/private_key.der") == cfg.hint_key_private
-
-    obj.destroy()

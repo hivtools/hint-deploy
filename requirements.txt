@@ -1,4 +1,4 @@
-constellation==0.0.7
+constellation==0.0.5
 docopt
 pytest
 requests
