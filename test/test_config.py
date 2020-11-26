@@ -1,5 +1,3 @@
-import pytest
-
 from src import hint_cli, hint_deploy
 
 
@@ -45,36 +43,3 @@ def test_load_and_reload_config():
     assert config_value.hint_tag == "master"
     assert config_name == "production"
     hint_cli.remove_config(path)
-
-
-def test_production_uses_persistant_keypair():
-    cfg = hint_deploy.HintConfig("config", "production")
-    assert cfg.hint_key_public is not None
-    assert cfg.hint_key_private is not None
-
-
-def test_staging_uses_transient_keypair():
-    cfg = hint_deploy.HintConfig("config", "staging")
-    assert cfg.hint_key_public is None
-    assert cfg.hint_key_private is None
-
-
-def test_keypair_allows_missing_key():
-    dat = {"app": {"a": 1}}
-    assert hint_deploy.keypair(dat, ["app", "key"]) is None
-
-
-def test_keypair_loads_keypair():
-    public = "VAULT:/secret/path:public"
-    private = "VAULT:/secret/path:private"
-    dat = {"app": {"a": 1, "key": {"public": public, "private": private}}}
-    pair = hint_deploy.keypair(dat, ["app", "key"])
-    assert pair == {"public": public, "private": private}
-
-
-def test_keypair_throws_if_half_given():
-    public = "VAULT:/secret/path:public"
-    dat = {"app": {"a": 1, "k": {"public": public}}}
-    msg = "Provide either both or neither 'app:k:public' and 'app:k:private'"
-    with pytest.raises(Exception, match=msg):
-        hint_deploy.keypair(dat, ["app", "k"])
