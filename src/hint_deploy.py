@@ -130,13 +130,19 @@ def hint_constellation(cfg):
         "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
-    # 6. hintr workers
+    # 6. calibrate worker
     worker_ref = cfg.hintr_worker_ref
+    calibrate_worker_args = ["--calibrate-only"]
+    calibrate_worker = constellation.ConstellationContainer(
+        "worker_calibrate", worker_ref, args = calibrate_worker_args,
+        mounts=hintr_mounts, environment=hintr_env)
+
+    # 7. hintr workers
     worker = constellation.ConstellationService(
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
 
-    containers = [db, redis, hintr, hint, proxy, worker]
+    containers = [db, redis, hintr, hint, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes,
