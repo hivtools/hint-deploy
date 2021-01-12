@@ -39,7 +39,7 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
+    assert docker_util.container_exists("hint_calibrate_worker")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 3
 
     # Some basic user management
@@ -94,7 +94,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
-    assert not docker_util.container_exists("hint_worker_calibrate")
+    assert not docker_util.container_exists("hint_calibrate_worker")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 0
 
 
@@ -174,7 +174,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
+    assert docker_util.container_exists("hint_calibrate_worker")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 5
 
@@ -206,7 +206,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
+    assert docker_util.container_exists("hint_calibrate_worker")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 3
 
     redis = obj.containers.get("redis", obj.prefix)

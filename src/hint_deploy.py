@@ -133,8 +133,8 @@ def hint_constellation(cfg):
     # 6. calibrate worker
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
-    calibrate_worker = constellation.ConstellationContainer(
-        "worker_calibrate", worker_ref, args=calibrate_worker_args,
+    calibrate_worker = constellation.ConstellationService(
+        "calibrate_worker", worker_ref, 1, args=calibrate_worker_args,
         mounts=hintr_mounts, environment=hintr_env)
 
     # 7. hintr workers
@@ -165,6 +165,7 @@ def hint_start(obj, cfg, args):
 
 def hint_upgrade_hintr(obj):
     hintr = obj.containers.find("hintr")
+    calibrate_worker = obj.containers.find("calibrate_worker")
     worker = obj.containers.find("worker")
     container = hintr.get(obj.prefix)
 
@@ -179,7 +180,7 @@ def hint_upgrade_hintr(obj):
             container.exec_run(["hintr_stop"])
         docker_util.container_remove_wait(container)
 
-    obj.start(subset=[hintr.name, worker.name])
+    obj.start(subset=[hintr.name, calibrate_worker.name, worker.name])
 
 
 def hint_upgrade_all(obj, db_tag):
