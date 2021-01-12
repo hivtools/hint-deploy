@@ -81,7 +81,7 @@ def test_start_hint():
     result = docker_util.exec_safely(hintr, args).output
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
-    assert len(data.keys()) == 2
+    assert len(data.keys()) == 3
 
     obj.destroy()
 
@@ -175,7 +175,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
     assert docker_util.container_exists("hint_worker_calibrate")
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 3
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 5
 
     # We are going to write some data into redis here and later check
