@@ -94,6 +94,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
+    assert not docker_util.container_exists("hint_worker_calibrate")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 0
 
 
