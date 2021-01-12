@@ -134,7 +134,7 @@ def hint_constellation(cfg):
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationContainer(
-        "worker_calibrate", worker_ref, args = calibrate_worker_args,
+        "worker_calibrate", worker_ref, args=calibrate_worker_args,
         mounts=hintr_mounts, environment=hintr_env)
 
     # 7. hintr workers
