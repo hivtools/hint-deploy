@@ -39,8 +39,9 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 3
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker_", False)) == 1
 
     # Some basic user management
     user = "test@example.com"
@@ -94,8 +95,9 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
-    assert not docker_util.container_exists("hint_worker_calibrate")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 0
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker_", False)) == 0
 
 
 def test_start_hint_from_cli():
@@ -163,6 +165,7 @@ def test_update_hintr_and_all():
     assert "Pulling docker image db-migrate" not in p
     assert "Stopping previous hintr and workers" in p
     assert "Starting hintr" in p
+    assert "Starting *service* calibrate_worker" in p
     assert "Starting *service* worker" in p
 
     assert docker_util.network_exists("hint_nw")
@@ -174,9 +177,12 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
-    assert len(docker_util.containers_matching("hint_worker_", True)) == 5
+    assert len(docker_util.containers_matching("hint_worker_", True)) == 4
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker", False)) == 1
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker", True)) == 2
 
     # We are going to write some data into redis here and later check
     # that it survived the upgrade.
@@ -206,8 +212,9 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
-    assert docker_util.container_exists("hint_worker_calibrate")
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 3
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker_", False)) == 1
 
     redis = obj.containers.get("redis", obj.prefix)
     args_get = ["redis-cli", "GET", "data_persists"]
