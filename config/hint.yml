@@ -16,6 +16,7 @@ hint:
 hintr:
   tag: "master"
   workers: 2
+  calibrate_workers: 1
   volumes:
     results: "hint_results"
     prerun: "hint_prerun"

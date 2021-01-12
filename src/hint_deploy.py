@@ -28,6 +28,8 @@ class HintConfig:
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
+        self.hintr_calibrate_workers = config.config_integer(
+            dat, ["hintr", "calibrate_workers"])
         self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
 
@@ -134,8 +136,8 @@ def hint_constellation(cfg):
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationService(
-        "calibrate_worker", worker_ref, 1, args=calibrate_worker_args,
-        mounts=hintr_mounts, environment=hintr_env)
+        "calibrate_worker", worker_ref, cfg.hintr_calibrate_workers,
+        args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
 
     # 7. hintr workers
     worker = constellation.ConstellationService(
