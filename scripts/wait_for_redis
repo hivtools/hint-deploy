@@ -4,12 +4,6 @@ wait_for()
     echo "waiting up to $TIMEOUT seconds for redis"
     start_ts=$(date +%s)
     for i in $(seq $TIMEOUT); do
-        # Using redis-cli as:
-        #
-        #   redis-cli -p $PORT ping
-        #
-        # seems heaps nicer but does not actually work properly
-        # because it pulls us up to soon.
         redis-cli -p 6379 ping > /dev/null 2>&1
         result=$?
         if [[ $result -eq 0 ]]; then
