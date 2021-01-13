@@ -80,20 +80,21 @@ class HintConfig:
 
 
 def hint_constellation(cfg):
-    # 1. The db
-    db_ref = constellation.ImageReference(
-        "mrcide", "hint-db", cfg.db_tag)
-    db_mounts = [constellation.ConstellationMount("db", "/pgdata")]
-    db = constellation.ConstellationContainer(
-        "db", db_ref, mounts=db_mounts, configure=db_configure)
-
-    # 2. Redis
+    # 1. Redis
     redis_ref = constellation.ImageReference("library", "redis",
                                              cfg.redis_tag)
     redis_mounts = [constellation.ConstellationMount("redis", "/data")]
     redis_args = ["--appendonly", "yes"]
     redis = constellation.ConstellationContainer(
-        "redis", redis_ref, mounts=redis_mounts, args=redis_args)
+        "redis", redis_ref, mounts=redis_mounts, args=redis_args,
+        configure=redis_configure)
+
+    # 2. The db
+    db_ref = constellation.ImageReference(
+        "mrcide", "hint-db", cfg.db_tag)
+    db_mounts = [constellation.ConstellationMount("db", "/pgdata")]
+    db = constellation.ConstellationContainer(
+        "db", db_ref, mounts=db_mounts, configure=db_configure)
 
     # 3. hintr
     hintr_ref = cfg.hintr_ref
@@ -219,6 +220,12 @@ def hint_user_run(ref, args, cfg):
     output = res.decode("UTF-8").rstrip()
     print(output)
     return output
+
+
+def redis_configure(container, cfg):
+    print("[db] Waiting for redis to come up")
+    docker_util.file_into_container("scripts/wait_for_redis", container, ".", "/wait_for_redis")
+    docker_util.exec_safely(container, ["bash", "/wait_for_redis"])
 
 
 def db_configure(container, cfg):
