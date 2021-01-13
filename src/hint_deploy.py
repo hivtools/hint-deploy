@@ -223,8 +223,9 @@ def hint_user_run(ref, args, cfg):
 
 
 def redis_configure(container, cfg):
-    print("[db] Waiting for redis to come up")
-    docker_util.file_into_container("scripts/wait_for_redis", container, ".", "/wait_for_redis")
+    print("[redis] Waiting for redis to come up")
+    docker_util.file_into_container(
+        "scripts/wait_for_redis", container, ".", "wait_for_redis")
     docker_util.exec_safely(container, ["bash", "/wait_for_redis"])
 
 
