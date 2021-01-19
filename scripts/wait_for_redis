@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+wait_for()
+{
+    echo "waiting up to $TIMEOUT seconds for redis"
+    start_ts=$(date +%s)
+    for i in $(seq $TIMEOUT); do
+        redis-cli -p 6379 ping | grep PONG
+        result=$?
+        if [[ $result -eq 0 ]]; then
+            end_ts=$(date +%s)
+            echo "redis is available after $((end_ts - start_ts)) seconds"
+            break
+        fi
+        sleep 1
+        echo "...still waiting"
+    done
+    return $result
+}
+
+# The variable expansion below is 20s by default, or the argument provided
+# to this script
+TIMEOUT="${1:-20}"
+wait_for
+RESULT=$?
+if [[ $RESULT -ne 0 ]]; then
+  echo "redis did not become available in time"
+fi
+exit $RESULT
