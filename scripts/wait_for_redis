@@ -4,7 +4,7 @@ wait_for()
     echo "waiting up to $TIMEOUT seconds for redis"
     start_ts=$(date +%s)
     for i in $(seq $TIMEOUT); do
-        redis-cli -p 6379 ping > /dev/null 2>&1
+        redis-cli -p 6379 ping | grep PONG
         result=$?
         if [[ $result -eq 0 ]]; then
             end_ts=$(date +%s)
