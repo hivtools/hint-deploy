@@ -1,5 +1,6 @@
 hint:
   adr_url: https://adr.unaids.org/
+  issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
   email:
     password: VAULT:secret/hint/email:password
 
