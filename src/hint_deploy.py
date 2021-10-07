@@ -38,6 +38,10 @@ class HintConfig:
 
         self.hint_email_password = config.config_string(
             dat, ["hint", "email", "password"], True, "")
+
+        self.hint_issue_report_url = config.config_string(
+            dat, ["hint", "issue_report_url"], True, "")
+
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
@@ -239,7 +243,8 @@ def hint_configure(container, cfg):
         "upload_dir": "/uploads",
         "hintr_url": "http://hintr:8888",
         "db_url": "jdbc:postgresql://db/hint",
-        "db_password": "changeme"
+        "db_password": "changeme",
+        "issue_report_url": cfg.hint_issue_report_url
     }
 
     if cfg.hint_adr_url is not None:
