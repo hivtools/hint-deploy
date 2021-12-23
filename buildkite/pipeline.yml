@@ -1,0 +1,6 @@
+steps:
+  - label: ":rocket: dev"
+    command: "ssh vagrant@wpia-naomi-dev.dide.ic.ac.uk 'cd hint-deploy && ./hint upgrade all'"
+    agents:
+      queue: "hint-deploy"
+
