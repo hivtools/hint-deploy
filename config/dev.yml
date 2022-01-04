@@ -1,10 +1,10 @@
 proxy:
-  host: naomi-staging.dide.ic.ac.uk
+  host: naomi-dev.dide.ic.ac.uk
   port_http: 80
   port_https: 443
   ssl:
-    certificate: VAULT:secret/hint/ssl/staging:certificate
-    key: VAULT:secret/hint/ssl/staging:key
+    certificate: VAULT:secret/hint/ssl/dev:certificate
+    key: VAULT:secret/hint/ssl/dev:key
 
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
