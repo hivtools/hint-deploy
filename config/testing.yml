@@ -1,0 +1,17 @@
+proxy:
+  host: naomi-testing.dide.ic.ac.uk
+  port_http: 10080
+  port_https: 10443
+  ssl:
+    certificate: VAULT:secret/hint/ssl/testing:certificate
+    key: VAULT:secret/hint/ssl/testing:key
+
+vault:
+  addr: https://vault.dide.ic.ac.uk:8200
+  auth:
+    method: github
+
+hint:
+  issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
+  email:
+    password: VAULT:secret/hint/email:password
