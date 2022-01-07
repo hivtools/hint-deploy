@@ -9,7 +9,7 @@ proxy:
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
-    method: github
+    method: approle
 
 hint:
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
