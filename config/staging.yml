@@ -10,6 +10,9 @@ vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
     method: approle
+    args:
+      role_id: $VAULT_AUTH_ROLE_ID
+      secret_id: $VAULT_AUTH_SECRET_ID
 
 hint:
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
