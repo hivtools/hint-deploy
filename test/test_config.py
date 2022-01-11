@@ -43,3 +43,12 @@ def test_load_and_reload_config():
     assert config_value.hint_tag == "master"
     assert config_name == "production"
     hint_cli.remove_config(path)
+
+def test_load_config_sets_branch_refs():
+    path = "config"
+    config = "production"
+    options = {"hint": {"tag": "mrc-123"},
+               "hintr": {"tag": "mrc-456"}}
+    cfg = hint_deploy.HintConfig(path, config, options=options)
+    assert cfg.hint_tag == "mrc-123"
+    assert cfg.hintr_tag == "mrc-456"

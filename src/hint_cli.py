@@ -1,19 +1,21 @@
 """
 Usage:
-  ./hint start [--pull] [<configname>]
+  ./hint start [--pull] [--hintr-branch=<branch>] [--hint-branch=<branch>] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
-  ./hint upgrade (hintr|all)
+  ./hint upgrade [--hintr-branch=<branch>] [--hint-branch=<branch>] (hintr|all)
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
 
 Options:
-  --pull           Pull images before starting
-  --volumes        Remove volumes (WARNING: irreversible data loss)
-  --network        Remove network
-  --kill           Kill the containers (faster, but possible db corruption)
+  --pull                    Pull images before starting
+  --volumes                 Remove volumes (WARNING: irreversible data loss)
+  --network                 Remove network
+  --kill                    Kill the containers (faster, but possible db corruption)
+  --hint-branch=<branch>    The hint branch to deploy
+  --hintr-branch=<branch>   The hintr branch to deploy
 """
 
 import docopt
@@ -32,6 +34,9 @@ from src.hint_deploy import \
     hint_user
 
 
+## Returned options are passed to constellation and override
+## configuration in yml e.g. branch to deploy. Args are
+## used only in hint-deploy
 def parse(argv=None):
     path = "config"
     config_name = None
@@ -40,26 +45,38 @@ def parse(argv=None):
         action = "start"
         config_name = dat["<configname>"]
         args = {"pull_images": dat["--pull"]}
+        options = {}
+        if dat["--hintr-branch"] is not None:
+            options["hintr"] = {"tag": dat["--hintr-branch"]}
+        if dat["--hint-branch"] is not None:
+            options["hint"] = {"tag": dat["--hint-branch"]}
     elif dat["stop"]:
         action = "stop"
         args = {"kill": dat["--kill"],
                 "remove_network": dat["--network"],
                 "remove_volumes": dat["--volumes"]}
+        options = {}
     elif dat["destroy"]:
         action = "stop"
         args = {"kill": True,
                 "remove_network": True,
                 "remove_volumes": True}
+        options = {}
     elif dat["status"]:
         action = "status"
         args = {}
+        options = {}
     elif dat["upgrade"]:
+        args = {}
+        options = {}
+        if dat["--hintr-branch"] is not None:
+            options["hintr"] = {"tag": dat["--hintr-branch"]}
+        if dat["--hint-branch"] is not None:
+            options["hint"] = {"tag": dat["--hint-branch"]}
         if dat["hintr"]:
             action = "upgrade_hintr"
-            args = {}
         else:
             action = "upgrade_all"
-            args = {}
     elif dat["user"]:
         action = "user"
         if dat["add"]:
@@ -72,7 +89,8 @@ def parse(argv=None):
                 "action": user_action,
                 "pull": dat["--pull"],
                 "password": dat["<password>"]}
-    return path, config_name, action, args
+        options = {}
+    return path, config_name, action, args, options
 
 
 def path_last_deploy(path):
@@ -93,16 +111,16 @@ def read_config(path):
     return dat
 
 
-def load_config(path, config_name=None):
+def load_config(path, config_name=None, options=None):
     if os.path.exists(path_last_deploy(path)):
         dat = read_config(path)
         when = timeago.format(dat["time"])
-        cfg = HintConfig(path, dat["config_name"])
+        cfg = HintConfig(path, dat["config_name"], options=options)
         config_name = dat["config_name"]
         print("[Loaded configuration '{}' ({})]".format(
             config_name or "<base>", when))
     else:
-        cfg = HintConfig(path, config_name)
+        cfg = HintConfig(path, config_name, options=options)
     return config_name, cfg
 
 
@@ -134,8 +152,8 @@ def prompt_yes_no(get_input=input):
 
 
 def main(argv=None):
-    path, config_name, action, args = parse(argv)
-    config_name, cfg = load_config(path, config_name)
+    path, config_name, action, args, options = parse(argv)
+    config_name, cfg = load_config(path, config_name, options)
     obj = hint_constellation(cfg)
     if action == "user":
         hint_user(cfg, **args)
