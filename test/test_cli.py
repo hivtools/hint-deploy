@@ -11,45 +11,58 @@ from src import hint_deploy
 
 def test_cli_parse():
     assert hint_cli.parse(["start"]) == \
-        ("config", None, "start", {"pull_images": False})
+        ("config", None, "start", {"pull_images": False}, {})
     assert hint_cli.parse(["start", "--pull"]) == \
-        ("config", None, "start", {"pull_images": True})
+        ("config", None, "start", {"pull_images": True}, {})
     assert hint_cli.parse(["start", "staging"]) == \
-        ("config", "staging", "start", {"pull_images": False})
+        ("config", "staging", "start", {"pull_images": False}, {})
+    assert hint_cli.parse(["start", "staging", "--hintr-branch=mrc-123"]) == \
+        ("config", "staging", "start", {"pull_images": False},
+         {"hintr": {"tag": "mrc-123"}})
+    assert hint_cli.parse(["start", "staging", "--hintr-branch=mrc-123",
+                           "--hint-branch=mrc-456"]) == \
+        ("config", "staging", "start", {"pull_images": False},
+         {"hintr": {"tag": "mrc-123"}, "hint": {"tag": "mrc-456"}})
 
     assert hint_cli.parse(["stop"]) == \
         ("config", None, "stop", {"kill": False, "remove_network": False,
-                                  "remove_volumes": False})
+                                  "remove_volumes": False}, {})
     assert hint_cli.parse(["stop", "--kill", "--network"]) == \
         ("config", None, "stop", {"kill": True, "remove_network": True,
-                                  "remove_volumes": False})
+                                  "remove_volumes": False}, {})
 
     assert hint_cli.parse(["destroy"]) == \
         ("config", None, "stop", {"kill": True, "remove_network": True,
-                                  "remove_volumes": True})
+                                  "remove_volumes": True}, {})
 
-    assert hint_cli.parse(["status"]) == ("config", None, "status", {})
+    assert hint_cli.parse(["status"]) == ("config", None, "status", {}, {})
 
     email = "user@example.com"
     password = "password"
     assert hint_cli.parse(["user", "add", email]) == \
         ("config", None, "user", {"email": email, "action": "add-user",
-                                  "pull": False, password: None})
+                                  "pull": False, password: None}, {})
     assert hint_cli.parse(["user", "add", "--pull", email, password]) == \
         ("config", None, "user", {"email": email, "action": "add-user",
-                                  "pull": True, password: password})
+                                  "pull": True, password: password}, {})
 
     assert hint_cli.parse(["user", "exists", email]) == \
         ("config", None, "user", {"email": email, "action": "user-exists",
-                                  "pull": False, password: None})
+                                  "pull": False, password: None}, {})
     assert hint_cli.parse(["user", "remove", email]) == \
         ("config", None, "user", {"email": email, "action": "remove-user",
-                                  "pull": False, password: None})
+                                  "pull": False, password: None}, {})
 
     assert hint_cli.parse(["upgrade", "hintr"]) == \
-        ("config", None, "upgrade_hintr", {})
+        ("config", None, "upgrade_hintr", {}, {})
     assert hint_cli.parse(["upgrade", "all"]) == \
-        ("config", None, "upgrade_all", {})
+        ("config", None, "upgrade_all", {}, {})
+    assert hint_cli.parse(["upgrade", "hintr", "--hintr-branch=mrc-123"]) == \
+        ("config", None, "upgrade_hintr", {}, {"hintr": {"tag": "mrc-123"}})
+    assert hint_cli.parse(["upgrade", "hintr", "--hintr-branch=mrc-123",
+                           "--hint-branch=mrc-456"]) == \
+        ("config", None, "upgrade_hintr", {},
+         {"hintr": {"tag": "mrc-123"}, "hint": {"tag": "mrc-456"}})
 
 
 def test_user_args_passed_to_hint_user():

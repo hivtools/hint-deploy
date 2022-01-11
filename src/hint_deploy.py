@@ -10,9 +10,9 @@ import constellation.docker_util as docker_util
 
 
 class HintConfig:
-    def __init__(self, path, config_name=None):
+    def __init__(self, path, config_name=None, options=None):
         dat = config.read_yaml("{}/hint.yml".format(path))
-        dat = config.config_build(path, dat, config_name)
+        dat = config.config_build(path, dat, config_name, options=options)
         self.network = config.config_string(dat, ["docker", "network"])
         self.prefix = config.config_string(dat, ["docker", "prefix"])
         default_tag = config.config_string(dat, ["docker", "default_tag"],
