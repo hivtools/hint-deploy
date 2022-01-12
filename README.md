@@ -44,7 +44,7 @@ Once a configuration is set during `start`, it will be reused by subsequent comm
 We have two copies of hint deployed:
 
 - [production](https://naomi.dide.ic.ac.uk) is `https://naomi.dide.ic.ac.uk`
-- [staging](https://naomi.dide.ic.ac.uk:10443) is `https://naomi.dide.ic.ac.uk:10443`
+- [staging](https://naomi-staging.dide.ic.ac.uk) is `https://naomi-staging.dide.ic.ac.uk`
 
 To get onto production, ssh to `naomi.dide` as the `hint` user with
 
@@ -54,7 +54,11 @@ ssh hint@naomi.dide.ic.ac.uk
 
 your public key should be added to the `.ssh/authorized_users` file.
 
-To get onto the staging server, from production run `./ssh-staging`
+To get onto the staging server
+
+```
+ssh vagrant@naomi-staging.dide.ic.ac.uk
+```
 
 ### Preliminary actions
 
