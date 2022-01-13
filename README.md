@@ -20,20 +20,22 @@ pip3 install --user -r requirements.txt
 <!-- Usage begin -->
 ```
 Usage:
-  ./hint start [--pull] [<configname>]
+  ./hint start [--pull] [--hintr-branch=<branch>] [--hint-branch=<branch>] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
-  ./hint upgrade (hintr|all)
+  ./hint upgrade [--hintr-branch=<branch>] [--hint-branch=<branch>] (hintr|all)
   ./hint user [--pull] add <email> [<password>]
   ./hint user [--pull] remove <email>
   ./hint user [--pull] exists <email>
 
 Options:
-  --pull           Pull images before starting
-  --volumes        Remove volumes (WARNING: irreversible data loss)
-  --network        Remove network
-  --kill           Kill the containers (faster, but possible db corruption)
+  --pull                    Pull images before starting
+  --volumes                 Remove volumes (WARNING: irreversible data loss)
+  --network                 Remove network
+  --kill                    Kill the containers (faster, but possible db corruption)
+  --hint-branch=<branch>    The hint branch to deploy
+  --hintr-branch=<branch>   The hintr branch to deploy
 ```
 <!-- Usage end -->
 
@@ -44,7 +46,7 @@ Once a configuration is set during `start`, it will be reused by subsequent comm
 We have two copies of hint deployed:
 
 - [production](https://naomi.dide.ic.ac.uk) is `https://naomi.dide.ic.ac.uk`
-- [staging](https://naomi.dide.ic.ac.uk:10443) is `https://naomi.dide.ic.ac.uk:10443`
+- [staging](https://naomi-staging.dide.ic.ac.uk) is `https://naomi-staging.dide.ic.ac.uk`
 
 To get onto production, ssh to `naomi.dide` as the `hint` user with
 
@@ -54,7 +56,11 @@ ssh hint@naomi.dide.ic.ac.uk
 
 your public key should be added to the `.ssh/authorized_users` file.
 
-To get onto the staging server, from production run `./ssh-staging`
+To get onto the staging server
+
+```
+ssh vagrant@naomi-staging.dide.ic.ac.uk
+```
 
 ### Preliminary actions
 
@@ -174,7 +180,7 @@ The production configuration will read these in.
 
 ## Modifying deploy
 
-By default `hint` will deploy with docker containers built off the `master` image. If you want to deploy using an image from a particular branch for testing you can do this by modifying the `tag` section `config/hint.yml` file.
+By default `hint` will deploy with docker containers built off the `master` image. If you want to deploy using an image from a particular branch for testing you can do this by passing one of the args `--hintr-branch=<tag-name>` or `--hint-branch=<tag-name>` or by modifying the `tag` section `config/hint.yml` file.
 
 Images available on the remote are tagged with
 * `hintr` - branch name e.g. `mrc-745`, git hash e.g. `56c3b7f`, version number e.g. `v0.0.15`
