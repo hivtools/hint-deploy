@@ -13,12 +13,18 @@ function check_all_data_exists {
         (-f "$1/prerun_backup.tar") && (-f "$1/results_backup.tar") && (-f "$1/uploads_backup.tar")
 }
 
-function restore {
-    docker run --rm --volumes-from hint_db -v $BACKUP_ROOT:/backup busybox tar -xvf /backup/pgdata_backup.tar /pgdata
-    docker run --rm --volumes-from hint_redis -v $BACKUP_ROOT:/backup busybox tar -xvf /backup/redis_backup.tar /data
-    docker run --rm --volumes-from hint_hintr -v $BACKUP_ROOT:/backup busybox tar -xvf /backup/prerun_backup.tar /prerun
-    docker run --rm --volumes-from hint_hintr -v $BACKUP_ROOT:/backup busybox tar -xvf /backup/results_backup.tar /results
-    docker run --rm --volumes-from hint_hintr -v $BACKUP_ROOT:/backup busybox tar -xvf /backup/uploads_backup.tar /uploads
+restore() {
+    ABSOLUTE_PATH="$(
+        cd "$(dirname "$1")"
+        pwd
+    )/$(basename "$1")"
+    echo $1
+    echo $ABSOLUTE_PATH
+    docker run --rm --volumes-from hint_db -v $ABSOLUTE_PATH:/backup postgres psql -U postgres hint </backup/working/db_dump.sql
+    docker run --rm --volumes-from hint_redis -v $ABSOLUTE_PATH:/backup busybox tar -xvf /backup/redis_backup.tar /data
+    docker run --rm --volumes-from hint_hintr -v $ABSOLUTE_PATH:/backup busybox tar -xvf /backup/prerun_backup.tar /prerun
+    docker run --rm --volumes-from hint_hintr -v $ABSOLUTE_PATH:/backup busybox tar -xvf /backup/results_backup.tar /results
+    docker run --rm --volumes-from hint_hintr -v $ABSOLUTE_PATH:/backup busybox tar -xvf /backup/uploads_backup.tar /uploads
 }
 
 if [ check_all_data_exists ]; then
