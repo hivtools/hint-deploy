@@ -1,0 +1,25 @@
+hint:
+  adr_url: https://adr.unaids.org/
+  issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
+  email:
+    password: VAULT:secret/hint/email:password
+
+hintr:
+  workers: 5
+  calibrate_workers: 2 
+
+proxy:
+  host: naomi-production.unaids.org
+  port_http: 80
+  port_https: 443
+
+vault:
+  addr: https://vault.dide.ic.ac.uk:8200
+  auth:
+    method: github
+
+users:
+  add_test_user: false
+
+deploy:
+  protect_data: true
