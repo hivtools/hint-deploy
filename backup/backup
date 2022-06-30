@@ -4,7 +4,10 @@
 ## db data, redis data, uploaded files, prerun files and results
 set -ex
 
-WD=$(dirname "$0")
+WD="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1
+    pwd -P
+)"
 NOW=$(date +'%Y_%d_%m-%H_%M_%S')
 mkdir $NOW
 BACKUP_PATH="$WD/$NOW"
