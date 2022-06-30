@@ -3,7 +3,10 @@
 ## Restore from a backup
 set -ex
 
-BACKUP_ROOT="$1"
+BACKUP_ROOT="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1
+    pwd -P
+)"
 
 function check_all_data_exists {
     (-d "$1") && (-f "$1/pgdata_backup.tar") && (-f "$1/redis_backup.tar") &&
