@@ -2,17 +2,30 @@
 
 ## Backup all volumes of data used by Naomi, namely:
 ## db data, redis data, uploaded files, prerun files and results
-set -ex
+set -e
 
-BACKUP_ROOT="$(
+SCRIPT_DIR="$(
     cd -- "$(dirname "$0")" >/dev/null 2>&1
     pwd -P
 )"
 NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$BACKUP_ROOT/$NOW"
+BACKUP_PATH="$SCRIPT_DIR/$NOW"
+BACKUP_WORKING_DIR="$SCRIPT_DIR/working"
+mkdir $BACKUP_WORKING_DIR
 
-docker run --rm --volumes-from hint_db -v $BACKUP_PATH:/backup busybox tar -czf /backup/pgdata_backup.tar /pgdata
-docker run --rm --volumes-from hint_redis -v $BACKUP_PATH:/backup busybox tar -czf /backup/redis_backup.tar /data
-docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czf /backup/prerun_backup.tar /prerun
-docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czf /backup/results_backup.tar /results
-docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czf /backup/uploads_backup.tar /uploads
+function clean_up {
+    echo "Backup failed, cleaning up working dir"
+    rm -rf $BACKUP_WORKING_DIR
+    exit 1
+}
+trap clean_up ERR
+
+docker run --rm --volumes-from hint_db --network hint_nw -v $BACKUP_WORKING_DIR:/backup postgres:10.3 pg_dump -U postgres hint >/backup/db_dump.sql
+docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/redis_backup.tar /data
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/prerun_backup.tar /prerun
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar /results
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar /uploads
+
+tar -czf $BACKUP_PATH $BACKUP_WORKING_DIR
+echo "Backup complete, saved at $BACKUP_PATH"
+rm -r $BACKUP_WORKING_DIR

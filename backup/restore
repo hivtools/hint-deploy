@@ -3,14 +3,9 @@
 ## Restore from a backup
 set -ex
 
-BACKUP_ROOT="$(
-    cd -- "$(dirname "$0")" >/dev/null 2>&1
-    pwd -P
-)"
-
-function check_all_data_exists {
-    (-d "$1") && (-f "$1/pgdata_backup.tar") && (-f "$1/redis_backup.tar") &&
-        (-f "$1/prerun_backup.tar") && (-f "$1/results_backup.tar") && (-f "$1/uploads_backup.tar")
+check_all_data_exists() {
+    [ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/pgdata_backup.tar" ] && [ -f "$1/redis_backup.tar" ] &&
+        [ -f "$1/prerun_backup.tar" ] && [ -f "$1/results_backup.tar" ] && [ -f "$1/uploads_backup.tar" ]
 }
 
 restore() {
@@ -27,10 +22,10 @@ restore() {
     docker run --rm --volumes-from hint_hintr -v $ABSOLUTE_PATH:/backup busybox tar -xvf /backup/uploads_backup.tar /uploads
 }
 
-if [ check_all_data_exists ]; then
-    restore
+if check_all_data_exists $1; then
+    restore $1
 else
-    echo "Backup $1 does not exist or is incomplete"
+    echo "Backup dir $1 does not exist or is incomplete"
     echo "Usage: restore <backup_dir>"
     exit 1
 fi
