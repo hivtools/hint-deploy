@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+## Backup all volumes of data used by Naomi, namely:
+## db data, redis data, uploaded files, prerun files and results
+set -ex
+
+WD=$(dirname "$0")
+NOW=$(date +'%Y_%d_%m-%H_%M_%S')
+mkdir $NOW
+BACKUP_PATH="$WD/$NOW"
+
+docker run --rm --volumes-from hint_db -v $BACKUP_PATH:/backup busybox tar -czvf /backup/pgdata_backup.tar /pgdata
+docker run --rm --volumes-from hint_redis -v $BACKUP_PATH:/backup busybox tar -czvf /backup/redis_backup.tar /data
+docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czvf /backup/prerun_backup.tar /prerun
+docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czvf /backup/results_backup.tar /results
+docker run --rm --volumes-from hint_hintr -v $BACKUP_PATH:/backup busybox tar -czvf /backup/uploads_backup.tar /uploads
