@@ -21,10 +21,10 @@ clean_up() {
 trap clean_up ERR
 
 docker exec hint_db pg_dump -U postgres hint >$BACKUP_WORKING_DIR/db_dump.sql
-docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/redis_backup.tar.gz /data
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/prerun_backup.tar.gz /prerun
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar.gz /results
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar.gz /uploads
+docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/redis_backup.tar.gz -C /data .
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/prerun_backup.tar.gz -C /prerun .
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar.gz -C /results .
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar.gz -C /uploads .
 
 tar -czf $BACKUP_PATH -C $BACKUP_WORKING_DIR .
 echo "Backup complete, saved at $BACKUP_PATH"

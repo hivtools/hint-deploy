@@ -12,32 +12,39 @@ assert_file_exists() {
 }
 
 assert_all_data_exists() {
-    if !([ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/pgdata_backup.tar" ] && [ -f "$1/redis_backup.tar" ] &&
-        [ -f "$1/prerun_backup.tar" ] && [ -f "$1/results_backup.tar" ] && [ -f "$1/uploads_backup.tar" ]); then
+    if !([ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/db_dump.sql" ] && [ -f "$1/redis_backup.tar.gz" ] &&
+        [ -f "$1/prerun_backup.tar.gz" ] && [ -f "$1/results_backup.tar.gz" ] && [ -f "$1/uploads_backup.tar.gz" ]); then
         echo "Backup dir $1 is incomplete"
         echo "Usage: restore <backup_dir>"
         exit 1
     fi
 }
 
-unzip() {
-    tar -xvf $1 -C $2
-}
-
 restore() {
     docker exec hint_db psql -U postgres hint <$1/db_dump.sql
-    docker run --rm --volumes-from hint_redis -v $1:/backup busybox tar -xvf /backup/redis_backup.tar /data
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar /prerun
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/results_backup.tar /results
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar /uploads
+    docker run --rm --volumes-from hint_redis -v $1:/backup busybox tar -xvf /backup/redis_backup.tar.gz -C /data
+    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar.gz -C /prerun
+    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/results_backup.tar.gz -C /results
+    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar.gz -C /uploads
 }
 
-ABSOLUTE_PATH="$(
+assert_file_exists $1
+RESTORE_DIR="$(
     cd "$(dirname "$1")"
     pwd
-)/$(basename "$1")"
-WORKING_DIR=$ABSOLUTE_PATH/working
-assert_file_exists $1
-unzip $1 $WORKING_DIR
-assert_all_data_exists $WORKING_DIR
-restore $WORKING_DIR
+)"
+RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
+RESTORE_WORKING_DIR=$RESTORE_DIR/working
+mkdir $RESTORE_WORKING_DIR
+clean_up() {
+    echo "Restore failed, cleaning up working dir"
+    rm -rf $RESTORE_WORKING_DIR
+    exit 1
+}
+trap clean_up ERR
+
+tar -xvf $1 -C $RESTORE_WORKING_DIR
+assert_all_data_exists $RESTORE_WORKING_DIR
+restore $RESTORE_WORKING_DIR
+echo "Restore complete"
+rm -rf $RESTORE_WORKING_DIR
