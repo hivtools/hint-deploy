@@ -13,7 +13,7 @@ BACKUP_PATH="$SCRIPT_DIR/$NOW.tar.gz"
 BACKUP_WORKING_DIR="$SCRIPT_DIR/working"
 mkdir $BACKUP_WORKING_DIR
 
-function clean_up {
+clean_up() {
     echo "Backup failed, cleaning up working dir"
     rm -rf $BACKUP_WORKING_DIR
     exit 1
