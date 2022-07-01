@@ -26,6 +26,6 @@ docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar.gz /results
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar.gz /uploads
 
-tar -czf $BACKUP_PATH $BACKUP_WORKING_DIR
+tar -czf $BACKUP_PATH -C $BACKUP_WORKING_DIR .
 echo "Backup complete, saved at $BACKUP_PATH"
 rm -rf $BACKUP_WORKING_DIR
