@@ -9,7 +9,7 @@ SCRIPT_DIR="$(
     pwd -P
 )"
 NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$SCRIPT_DIR/$NOW"
+BACKUP_PATH="$SCRIPT_DIR/$NOW.tar.gz"
 BACKUP_WORKING_DIR="$SCRIPT_DIR/working"
 mkdir $BACKUP_WORKING_DIR
 
@@ -20,12 +20,12 @@ function clean_up {
 }
 trap clean_up ERR
 
-docker run --rm --volumes-from hint_db --network hint_nw -v $BACKUP_WORKING_DIR:/backup postgres:10.3 pg_dump -U postgres hint >/backup/db_dump.sql
-docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/redis_backup.tar /data
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/prerun_backup.tar /prerun
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar /results
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar /uploads
+docker exec hint_db pg_dump -U postgres hint >$BACKUP_WORKING_DIR/db_dump.sql
+docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/redis_backup.tar.gz /data
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/prerun_backup.tar.gz /prerun
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/results_backup.tar.gz /results
+docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -czf /backup/uploads_backup.tar.gz /uploads
 
 tar -czf $BACKUP_PATH $BACKUP_WORKING_DIR
 echo "Backup complete, saved at $BACKUP_PATH"
-rm -r $BACKUP_WORKING_DIR
+rm -rf $BACKUP_WORKING_DIR
