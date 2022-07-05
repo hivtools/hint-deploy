@@ -21,8 +21,8 @@ assert_all_data_exists() {
 }
 
 restore() {
-    docker exec hint_db psql -U postgres -c "DROP DATABASE hint"
-    docker exec hint_db psql -U postgres -c "CREATE DATABASE hint"
+    docker exec hint_db dropdb -f hint
+    docker exec hint_db createdb -T template0 hint
     cat $1/db_dump.sql | docker exec -i hint_db psql -U postgres hint
     docker run --rm --volumes-from hint_redis -v $1:/backup busybox tar -xvf /backup/redis_backup.tar.gz -C /data
     docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar.gz -C /prerun
