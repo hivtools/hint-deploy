@@ -37,9 +37,7 @@ create_volumes() {
 
 restore() {
     create_volumes
-
-    cat $1/db_dump.sql | docker exec -i hint_db psql -U postgres hint
-    docker run --rm -v hint_db_data:/data -v $1:/backup postgres:10.3 ### TODO
+    docker run --rm -v hint_db_data:/pgdata -v $1:/backup postgres:10-alpine -c "cat /backup/db_dump.sql | psql -U postgres hint"
     docker run --rm -v hint_redis_data:/data $1:/backup busybox tar -xvf /backup/redis_backup.tar -C /data
     docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
     docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xvf /backup/results_backup.tar -C /data
