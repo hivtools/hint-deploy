@@ -3,6 +3,7 @@
 ## Restore from a backup
 set -ex
 
+volumes=("hint_db_data", "hint_redis_data", "hint_prerun", "hint_results", "hint_uploads")
 assert_file_exists() {
     if !([ ! -z "$1" ] && [ -f "$1" ]); then
         echo "Backup dir $1 does not exist"
@@ -20,14 +21,31 @@ assert_all_data_exists() {
     fi
 }
 
+create_volumes() {
+    existing_volumes=$(docker volume ls --format '{{.Name}}')
+    for volume in ${volumes[@]}; do
+        if [[ " ${existing_volumes[*]} " =~ " ${volume} " ]]; then
+            echo "Volume ${volume} already exists, remove volume before running restore"
+            exit 1
+        fi
+    done
+    for volume in ${volumes[@]}; do
+        echo "Creating volume ${volume}"
+        docker volume create ${volume}
+    done
+}
+
 restore() {
-    docker exec hint_db dropdb -f hint
-    docker exec hint_db createdb -T template0 hint
+    create_volumes
+
     cat $1/db_dump.sql | docker exec -i hint_db psql -U postgres hint
-    docker run --rm --volumes-from hint_redis -v $1:/backup busybox tar -xvf /backup/redis_backup.tar.gz -C /data
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar.gz -C /prerun
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/results_backup.tar.gz -C /results
-    docker run --rm --volumes-from hint_hintr -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar.gz -C /uploads
+    docker run --rm -v hint_db_data:/data -v $1:/backup postgres:10.3 ### TODO
+    docker run --rm -v hint_redis_data:/data $1:/backup busybox tar -xvf /backup/redis_backup.tar -C /data
+    docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
+    docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xvf /backup/results_backup.tar -C /data
+    docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar -C /data
+    ## Restart everything with most up to date
+    ./hint upgrade all
 }
 
 assert_file_exists $1
