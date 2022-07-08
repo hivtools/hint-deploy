@@ -56,9 +56,9 @@ restore() {
     docker exec -i restore_pg createdb -U postgres hint
     docker exec -i restore_pg psql -U postgres -d hint <$1/db_dump.sql
     docker stop restore_pg
-    docker run --rm -v hint_redis_data:/data --name helper busybox true
+    docker run -v hint_redis_data:/data --name helper busybox true
     docker cp $1/dump.rdb helper:/data
-    docker stop helper
+    docker rm helper
     docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
     docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xvf /backup/results_backup.tar -C /data
     docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar -C /data
@@ -75,7 +75,8 @@ mkdir $RESTORE_WORKING_DIR
 clean_up() {
     echo "Restore failed, cleaning up working dir"
     rm -rf $RESTORE_WORKING_DIR
-    docker stop restore_pg helper
+    docker stop restore_pg
+    docker rm helper
     exit 1
 }
 trap clean_up ERR
