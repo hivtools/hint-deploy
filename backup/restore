@@ -51,7 +51,7 @@ create_volumes() {
 
 restore() {
     create_volumes
-    docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password --name restore_pg postgres:10.3
+    docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
     sleep 10 ## Ideally here we would do something cleverer and poll for db being ready to accept connections
     docker exec -i restore_pg createdb -U postgres hint
     docker exec -i restore_pg psql -U postgres -d hint <$1/db_dump.sql
