@@ -79,6 +79,7 @@ clean_up() {
 trap clean_up ERR
 
 tar -xvf $1 -C $RESTORE_WORKING_DIR
+md5sum --check $RESTORE_WORKING_DIR/checklist.chk
 assert_all_data_exists $RESTORE_WORKING_DIR
 restore $RESTORE_WORKING_DIR
 echo "Restore complete"

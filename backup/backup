@@ -27,7 +27,7 @@ docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/prerun_backup.tar -C /prerun .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/results_backup.tar -C /results .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
-find $BACKUP_WORKING_DIR -type f -exec md5sum "{}" + >$BACKUP_WORKING_DIR/checklist.chk
+find $BACKUP_WORKING_DIR -type f \( -not -name "checklist.chk" \) -exec md5sum "{}" + >$BACKUP_WORKING_DIR/checklist.chk
 
 tar -cf $BACKUP_PATH -C $BACKUP_WORKING_DIR .
 echo "Backup complete, saved at $BACKUP_PATH"
