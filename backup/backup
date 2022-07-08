@@ -14,24 +14,26 @@ BACKUP_WORKING_DIR="$SCRIPT_DIR/working"
 mkdir $BACKUP_WORKING_DIR
 
 clean_up() {
-    echo "Backup failed, cleaning up working dir"
+    local lineno=$1
+    local msg=$2
+    echo "Backup failed at $lineno: $msg"
     rm -rf $BACKUP_WORKING_DIR
     exit 1
 }
-trap clean_up ERR
+trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
 
 docker exec hint_db pg_dump -U postgres hint >$BACKUP_WORKING_DIR/db_dump.sql
 docker exec hint_redis redis-cli BGSAVE
-finished=0
+running=0
 wait_time=0
-while [ $finished -eq 0 ]; do
+while [ $running -eq 0 ]; do
     sleep 2
-    wait_time=$wait_time + 2
+    wait_time=$(($wait_time + 2))
     echo "Polling redis for backup complete, waited $wait_time seconds"
-    docker exec hint_redis redis-cli INFO PERSISTENCE | grep -q "rdb_bgsave_in_progress:1"
-    finished=$?
+    docker exec hint_redis /bin/bash -c "redis-cli INFO PERSISTENCE | grep -q \"rdb_bgsave_in_progress:1\"" || running=$?
 done
-docker cp hint_redis dump.rdb $BACKUP_WORKING_DIR
+echo "Redis backup complete"
+docker cp hint_redis:/data/dump.rdb $BACKUP_WORKING_DIR
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/prerun_backup.tar -C /prerun .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/results_backup.tar -C /results .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
