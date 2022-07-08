@@ -53,7 +53,7 @@ restore() {
     create_volumes
     docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
     sleep 5 ## Ideally here we would do something cleverer and poll for db being ready to accept connections
-    docker exec -i restore_pg psql -U postgres -d hint <$1/db_dump.sql
+    docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql
     docker stop restore_pg
     docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xvf /backup/redis_backup.tar -C /data
     docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
