@@ -22,7 +22,7 @@ clean_up() {
 }
 trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
 
-docker exec hint_db pg_dump -U postgres hint >$BACKUP_WORKING_DIR/db_dump.sql
+docker exec hint_db pg_dumpall -U postgres >$BACKUP_WORKING_DIR/db_dump.sql
 docker exec hint_redis redis-cli BGSAVE
 waiting=0
 wait_time=0
