@@ -24,13 +24,13 @@ trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
 
 docker exec hint_db pg_dump -U postgres hint >$BACKUP_WORKING_DIR/db_dump.sql
 docker exec hint_redis redis-cli BGSAVE
-running=0
+waiting=0
 wait_time=0
-while [ $running -eq 0 ]; do
+while [ $waiting -eq 0 ]; do
     sleep 2
     wait_time=$(($wait_time + 2))
     echo "Polling redis for backup complete, waited $wait_time seconds"
-    docker exec hint_redis /bin/bash -c "redis-cli INFO PERSISTENCE | grep -q \"rdb_bgsave_in_progress:1\"" || running=$?
+    docker exec hint_redis /bin/bash -c "redis-cli INFO PERSISTENCE | grep -q \"rdb_bgsave_in_progress:1\"" || waiting=$?
 done
 echo "Redis backup complete"
 docker cp hint_redis:/data/dump.rdb $BACKUP_WORKING_DIR

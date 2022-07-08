@@ -51,11 +51,14 @@ create_volumes() {
 
 restore() {
     create_volumes
-    docker run --rm -v hint_db_data:/pgdata -v $1:/backup postgres:10-alpine -c "cat /backup/db_dump.sql | psql -U postgres hint"
-    docker run -v hint_redis_data:/ --name helper busybox true
-    docker cp $1/dump.rdb helper:/
-    docker rm helper
-    docker cp run --rm -v hint_redis_data:/data $1:/backup redis:5.0
+    docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password --name restore_pg postgres:10.3
+    sleep 10 ## Ideally here we would do something cleverer and poll for db being ready to accept connections
+    docker exec -i restore_pg createdb -U postgres hint
+    docker exec -i restore_pg psql -U postgres -d hint <$1/db_dump.sql
+    docker stop restore_pg
+    docker run --rm -v hint_redis_data:/data --name helper busybox true
+    docker cp $1/dump.rdb helper:/data
+    docker stop helper
     docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
     docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xvf /backup/results_backup.tar -C /data
     docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar -C /data
@@ -72,6 +75,7 @@ mkdir $RESTORE_WORKING_DIR
 clean_up() {
     echo "Restore failed, cleaning up working dir"
     rm -rf $RESTORE_WORKING_DIR
+    docker stop restore_pg helper
     exit 1
 }
 trap clean_up ERR
