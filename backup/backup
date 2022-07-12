@@ -31,15 +31,16 @@ find $BACKUP_WORKING_DIR -type f \( -not -name "checklist.chk" \) -exec md5sum "
 
 vault_path="secret/hint/$HOSTNAME/cipher"
 echo "Do you want to backup private & public keys to secure ADR keys to vault?"
-echo "!!This will overwrite an existing entry at this path in vault!!"
+echo "!!This will overwrite any existing entry at '$vault_path' in vault!!"
 echo "You do not need to do this if you plan to restore to the same server, but if you want to load the backup onto"
 echo "another server and have the user entered ADR keys still work then you need backup these keys"
-read -p "Backup keys?" -n 1 -r
+read -p "Backup keys? y/n" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    vault login -method=github
-    public_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der)
-    private_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der)
+    vault login -address="https://vault.dide.ic.ac.uk:8200" -method=github
+    public_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
+    private_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
+    echo "Writing to $vault_path"
     vault write $vault_path public=$public_key private=$private_key
 fi
 
