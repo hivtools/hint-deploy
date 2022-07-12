@@ -2,7 +2,7 @@
 
 ## Backup all volumes of data used by Naomi, namely:
 ## db data, redis data, uploaded files, prerun files and results
-set -e
+set -eE
 
 SCRIPT_DIR="$(
     cd -- "$(dirname "$0")" >/dev/null 2>&1

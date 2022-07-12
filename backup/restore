@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Restore from a backup
-set -e
+set -eE
 
-volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads", "hint_config")
+volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
 
 array_contains() {
     local seeking=$1
@@ -83,8 +83,8 @@ mkdir $RESTORE_WORKING_DIR
 clean_up() {
     echo "Restore failed, cleaning up working dir"
     rm -rf $RESTORE_WORKING_DIR
-    docker stop restore_pg
-    docker rm helper
+    docker stop restore_pg || true
+    docker rm helper || true
     exit 1
 }
 trap clean_up ERR
