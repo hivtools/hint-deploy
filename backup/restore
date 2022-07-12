@@ -53,12 +53,12 @@ restore() {
     create_volumes
     docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
     sleep 5 ## Ideally here we would do something cleverer and poll for db being ready to accept connections
-    docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql
+    docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql >/dev/null
     docker stop restore_pg
-    docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xvf /backup/redis_backup.tar -C /data
-    docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xvf /backup/prerun_backup.tar -C /data
-    docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xvf /backup/results_backup.tar -C /data
-    docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar -C /data
+    docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xf /backup/redis_backup.tar -C /data
+    docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xf /backup/prerun_backup.tar -C /data
+    docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xf /backup/results_backup.tar -C /data
+    docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xf /backup/uploads_backup.tar -C /data
 }
 
 restore_key() {
@@ -66,10 +66,10 @@ restore_key() {
     echo "Restoring keys from vault path '$VAULT_PATH'"
     VAULT_ADDR="https://vault.dide.ic.ac.uk:8200"
     vault login -address=$VAULT_ADDR -method=github
-    PUBLIC_KEY=$(vault read -field=public $VAULT_PATH | base64 --decode --ignore-garbage)
-    PRIVATE_KEY=$(vault read -field=private $VAULT_PATH | base64 --decode --ignore-garbage)
+    PUBLIC_KEY=$(vault read -address=$VAULT_ADDR -field=public $VAULT_PATH)
+    PRIVATE_KEY=$(vault read -address=$VAULT_ADDR -field=private $VAULT_PATH)
     docker run --rm -v hint_config:/data busybox sh -c \
-        "mkdir /data/token_key && echo $PUBLIC_KEY >/data/token_key/public_key.der && echo $PRIVATE_KEY >/data/token_key/private_key.der"
+        "mkdir /data/token_key && echo $PUBLIC_KEY | base64 -d >/data/token_key/public_key.der && echo $PRIVATE_KEY | base64 -d >/data/token_key/private_key.der"
 }
 
 assert_file_exists $1
