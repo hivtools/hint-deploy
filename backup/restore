@@ -3,7 +3,7 @@
 ## Restore from a backup
 set -e
 
-volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads")
+volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads", "hint_config")
 
 array_contains() {
     local seeking=$1
@@ -61,6 +61,17 @@ restore() {
     docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xvf /backup/uploads_backup.tar -C /data
 }
 
+restore_key() {
+    VAULT_PATH=$(cat $RESTORE_WORKING_DIR/cipher_path)
+    echo "Restoring keys from vault path '$VAULT_PATH'"
+    VAULT_ADDR="https://vault.dide.ic.ac.uk:8200"
+    vault login -address=$VAULT_ADDR -method=github
+    PUBLIC_KEY=$(vault read -field=public $VAULT_PATH | base64 --decode --ignore-garbage)
+    PRIVATE_KEY=$(vault read -field=private $VAULT_PATH | base64 --decode --ignore-garbage)
+    docker run --rm -v hint_config:/data busybox sh -c \
+        "mkdir /data/token_key && echo $PUBLIC_KEY >/data/token_key/public_key.der && echo $PRIVATE_KEY >/data/token_key/private_key.der"
+}
+
 assert_file_exists $1
 RESTORE_DIR="$(
     cd "$(dirname "$1")"
@@ -82,5 +93,14 @@ tar -xvf $1 -C $RESTORE_WORKING_DIR
 md5sum --check $RESTORE_WORKING_DIR/checklist.chk
 assert_all_data_exists $RESTORE_WORKING_DIR
 restore $RESTORE_WORKING_DIR
+if [ -f "$RESTORE_WORKING_DIR/cipher_path" ]; then
+    echo "Do you want to restore cipher keys from vault?"
+    read -p "Restore keys? y/n" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        restore_key
+    fi
+fi
+
 echo "Restore complete"
 rm -rf $RESTORE_WORKING_DIR
