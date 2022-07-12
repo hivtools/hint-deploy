@@ -29,6 +29,20 @@ docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
 find $BACKUP_WORKING_DIR -type f \( -not -name "checklist.chk" \) -exec md5sum "{}" + >$BACKUP_WORKING_DIR/checklist.chk
 
+vault_path="secret/hint/$HOSTNAME/cipher"
+echo "Do you want to backup private & public keys to secure ADR keys to vault?"
+echo "!!This will overwrite an existing entry at this path in vault!!"
+echo "You do not need to do this if you plan to restore to the same server, but if you want to load the backup onto"
+echo "another server and have the user entered ADR keys still work then you need backup these keys"
+read -p "Backup keys?" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    vault login -method=github
+    public_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der)
+    private_key=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der)
+    vault write $vault_path public=$public_key private=$private_key
+fi
+
 tar -cf $BACKUP_PATH -C $BACKUP_WORKING_DIR .
 echo "Backup complete, saved at $BACKUP_PATH"
 rm -rf $BACKUP_WORKING_DIR
