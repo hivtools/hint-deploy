@@ -5,6 +5,23 @@ set -eE
 
 volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
 
+assert_file_exists $1
+RESTORE_DIR="$(
+    cd "$(dirname "$1")"
+    pwd
+)"
+RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
+RESTORE_WORKING_DIR=$RESTORE_DIR/working
+mkdir $RESTORE_WORKING_DIR
+clean_up() {
+    echo "Restore failed, cleaning up working dir"
+    rm -rf $RESTORE_WORKING_DIR
+    docker stop restore_pg || true
+    docker rm helper || true
+    exit 1
+}
+trap clean_up ERR
+
 array_contains() {
     local seeking=$1
     shift
@@ -49,10 +66,36 @@ create_volumes() {
     done
 }
 
+wait_for_postgres() {
+    echo "waiting 10 seconds for postgres"
+    start_ts=$(date +%s)
+    for i in $(seq 10); do
+        # Using pg_ready as:
+        #
+        #   pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+        #
+        # seems heaps nicer but does not actually work properly
+        # because it pulls us up to soon.
+        docker exec -i restore_pg psql -U postgres -d postgres -c "select 1;" >/dev/null 2>&1
+        result=$?
+        if [[ $result -eq 0 ]]; then
+            end_ts=$(date +%s)
+            echo "postgres is available after $((end_ts - start_ts)) seconds"
+            break
+        fi
+        sleep 1
+        echo "...still waiting"
+    done
+    if [[ $result -ne 0 ]]; then
+        echo "Postgres did not become available in time"
+        clean_up
+    fi
+}
+
 restore() {
     create_volumes
     docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
-    sleep 5 ## Ideally here we would do something cleverer and poll for db being ready to accept connections
+    wait_for_postgres
     docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql >/dev/null
     docker stop restore_pg
     docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xf /backup/redis_backup.tar -C /data
@@ -71,23 +114,6 @@ restore_key() {
     docker run --rm -v hint_config:/data busybox sh -c \
         "mkdir /data/token_key && echo $PUBLIC_KEY | base64 -d >/data/token_key/public_key.der && echo $PRIVATE_KEY | base64 -d >/data/token_key/private_key.der"
 }
-
-assert_file_exists $1
-RESTORE_DIR="$(
-    cd "$(dirname "$1")"
-    pwd
-)"
-RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
-RESTORE_WORKING_DIR=$RESTORE_DIR/working
-mkdir $RESTORE_WORKING_DIR
-clean_up() {
-    echo "Restore failed, cleaning up working dir"
-    rm -rf $RESTORE_WORKING_DIR
-    docker stop restore_pg || true
-    docker rm helper || true
-    exit 1
-}
-trap clean_up ERR
 
 tar -xvf $1 -C $RESTORE_WORKING_DIR
 md5sum --check $RESTORE_WORKING_DIR/checklist.chk
