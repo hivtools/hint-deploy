@@ -5,14 +5,6 @@ set -eE
 
 volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
 
-assert_file_exists $1
-RESTORE_DIR="$(
-    cd "$(dirname "$1")"
-    pwd
-)"
-RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
-RESTORE_WORKING_DIR=$RESTORE_DIR/working
-mkdir $RESTORE_WORKING_DIR
 clean_up() {
     echo "Restore failed, cleaning up working dir"
     rm -rf $RESTORE_WORKING_DIR
@@ -20,7 +12,6 @@ clean_up() {
     docker rm helper || true
     exit 1
 }
-trap clean_up ERR
 
 array_contains() {
     local seeking=$1
@@ -114,6 +105,16 @@ restore_key() {
     docker run --rm -v hint_config:/data busybox sh -c \
         "mkdir /data/token_key && echo $PUBLIC_KEY | base64 -d >/data/token_key/public_key.der && echo $PRIVATE_KEY | base64 -d >/data/token_key/private_key.der"
 }
+
+assert_file_exists $1
+RESTORE_DIR="$(
+    cd "$(dirname "$1")"
+    pwd
+)"
+RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
+RESTORE_WORKING_DIR=$RESTORE_DIR/working
+mkdir $RESTORE_WORKING_DIR
+trap clean_up ERR
 
 tar -xvf $1 -C $RESTORE_WORKING_DIR
 md5sum --check $RESTORE_WORKING_DIR/checklist.chk
