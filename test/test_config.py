@@ -44,6 +44,7 @@ def test_load_and_reload_config():
     assert config_name == "production"
     hint_cli.remove_config(path)
 
+
 def test_load_config_sets_branch_refs():
     path = "config"
     config = "production"

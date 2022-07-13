@@ -1,6 +1,7 @@
 """
 Usage:
-  ./hint start [--pull] [--hintr-branch=<branch>] [--hint-branch=<branch>] [<configname>]
+  ./hint start [--pull] [--hintr-branch=<branch>]
+               [--hint-branch=<branch>] [<configname>]
   ./hint stop  [--volumes] [--network] [--kill] [--force]
   ./hint destroy
   ./hint status
@@ -13,7 +14,8 @@ Options:
   --pull                    Pull images before starting
   --volumes                 Remove volumes (WARNING: irreversible data loss)
   --network                 Remove network
-  --kill                    Kill the containers (faster, but possible db corruption)
+  --kill                    Kill the containers (faster,
+                            but possible db corruption)
   --hint-branch=<branch>    The hint branch to deploy
   --hintr-branch=<branch>   The hintr branch to deploy
 """
@@ -34,9 +36,9 @@ from src.hint_deploy import \
     hint_user
 
 
-## Returned options are passed to constellation and override
-## configuration in yml e.g. branch to deploy. Args are
-## used only in hint-deploy
+# Returned options are passed to constellation and override
+# configuration in yml e.g. branch to deploy. Args are
+# used only in hint-deploy
 def parse(argv=None):
     path = "config"
     config_name = None
