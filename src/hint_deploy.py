@@ -44,6 +44,15 @@ class HintConfig:
         self.hint_issue_report_url = config.config_string(
             dat, ["hint", "issue_report_url"], True, "")
 
+        self.hint_oauth2_client_id = config.config_string(
+            dat, ["hint", "oauth2_client_id"], True, "")
+
+        self.hint_oauth2_client_secret = config.config_string(
+            dat, ["hint", "oauth2_client_secret"], True, "")
+
+        self.hint_oauth2_client_url = config.config_string(
+            dat, ["hint", "oauth2_client_url"], True, "")
+
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
@@ -261,7 +270,10 @@ def hint_configure(container, cfg):
         "hintr_url": "http://hintr:8888",
         "db_url": "jdbc:postgresql://db/hint",
         "db_password": "changeme",
-        "issue_report_url": cfg.hint_issue_report_url
+        "issue_report_url": cfg.hint_issue_report_url,
+        "oauth2_client_id": cfg.hint_oauth2_client_id,
+        "oauth2_client_secret": cfg.hint_oauth2_client_secret,
+        "oauth2_client_url": cfg.hint_oauth2_client_url
     }
 
     if cfg.hint_adr_url is not None:
