@@ -206,10 +206,6 @@ def hint_user(cfg, action, email, pull, password=None):
         docker_util.image_pull("hint cli", str(ref))
     args = [action, email]
     if action == "add-user":
-        res_exists = hint_user_run(ref, ["user-exists", email], cfg)
-        if res_exists.endswith("\ntrue"):
-            print("Not adding user {} as they already exist".format(email))
-            return
         if password:
             args.append(password)
     hint_user_run(ref, args, cfg)
