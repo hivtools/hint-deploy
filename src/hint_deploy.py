@@ -143,9 +143,7 @@ def hint_constellation(cfg):
 
 
     # Resource server (temporary)
-    resource_server_ref = constellation.ImageReference(
-            "mrcide", "hint-adr-poc"
-        )
+    resource_server_ref = "mrcide/hint-adr-poc"
     resource_server_ports = [5000]
     resource_server = constellation.ConstellationContainer(
         "resource_server", resource_server_ref, ports=resource_server_ports,
