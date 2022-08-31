@@ -27,6 +27,8 @@ class HintConfig:
                                                  True, False)
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
+        self.proxy_tag = config.config_string(dat, ["proxy", "tag"],
+                                              True, default_tag)                                      
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
         self.hintr_calibrate_workers = config.config_integer(
             dat, ["hintr", "calibrate_workers"])
@@ -57,6 +59,10 @@ class HintConfig:
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
 
+   
+        self.proxy_ref = constellation.ImageReference(
+            "mrcide", "hint-proxy", self.proxy_tag
+        )
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
                                                      ["proxy", "port_http"],
@@ -136,14 +142,13 @@ def hint_constellation(cfg):
         configure=hint_configure)
 
     # 5. proxy
-    proxy_ref = constellation.ImageReference("reside", "proxy-nginx", "latest")
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
                   cfg.proxy_host,
                   str(cfg.proxy_port_http),
                   str(cfg.proxy_port_https)]
     proxy = constellation.ConstellationContainer(
-        "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
+        "proxy", cfg.proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
     # 6. calibrate worker

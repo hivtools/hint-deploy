@@ -23,6 +23,7 @@ hintr:
   use_mock_model: false
 
 proxy:
+  tag: "mrc-3592"
   host: localhost
   # port_http: 80
   # port_https: 443
