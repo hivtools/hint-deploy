@@ -61,7 +61,7 @@ class HintConfig:
 
    
         self.proxy_ref = constellation.ImageReference(
-            "reside, "hint-proxy", self.proxy_tag
+            "mrcide", "hint-proxy", self.proxy_tag
         )
         self.proxy_host = config.config_string(dat, ["proxy", "host"])
         self.proxy_port_http = config.config_integer(dat,
