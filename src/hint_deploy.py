@@ -141,6 +141,18 @@ def hint_constellation(cfg):
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
         configure=hint_configure)
 
+
+    # Resource server (temporary)
+    resource_server_ref = constellation.ImageReference(
+            "mrcide", "hint-adr-poc"
+        )
+    resource_server_ports = [5000]
+    resource_server = constellation.ConstellationContainer(
+        "resource_server", resource_server_ref, ports=resource_server_ports,
+        args=None, configure=None
+    )
+
+
     # 5. proxy
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
@@ -163,7 +175,7 @@ def hint_constellation(cfg):
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
 
-    containers = [db, redis, hintr, hint, proxy, calibrate_worker, worker]
+    containers = [db, redis, hintr, hint, resource_server, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes,
