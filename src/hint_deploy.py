@@ -53,6 +53,12 @@ class HintConfig:
         self.hint_oauth2_client_url = config.config_string(
             dat, ["hint", "oauth2_client_url"], True, "")
 
+        self.hint_oauth2_client_adr_url = config.config_string(
+            dat, ["hint", "oauth2_client_adr_url"], True, "")
+
+        self.hint_oauth2_client_audience = config.config_string(
+            dat, ["hint", "oauth2_client_audience"], True, "")
+
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
