@@ -294,7 +294,9 @@ def hint_configure(container, cfg):
         "issue_report_url": cfg.hint_issue_report_url,
         "oauth2_client_id": cfg.hint_oauth2_client_id,
         "oauth2_client_secret": cfg.hint_oauth2_client_secret,
-        "oauth2_client_url": cfg.hint_oauth2_client_url
+        "oauth2_client_url": cfg.hint_oauth2_client_url,
+        "oauth2_client_adr_url": cfg.hint_oauth2_client_adr_url,
+        "oauth2_client_audience ": cfg.hint_oauth2_client_audience
     }
 
     if cfg.hint_adr_url is not None:
