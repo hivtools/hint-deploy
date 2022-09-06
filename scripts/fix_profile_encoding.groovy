@@ -1,3 +1,15 @@
+// We have upgraded pac4j from v 3.3.0 to v 5.4.3 see
+// https://github.com/mrc-ide/hint/pull/731/files, the update includes changes
+// to the serialization format used for the profile. It previously used
+// java serialization but now uses JSON. Support for Java serialized profiles
+// has been removed meaning that when a user with an old format profile tries to
+// login they get an error.
+// We need to migrate the profile to use JSON serialization.
+// This script reads the profiles from the database, uses the 
+// ProfleServiceSerializer from pac4j to decode the Java serialized profile
+// and recode as JSON. It then updates the column in the database to the JSON
+// serialized format.
+
 @GrabConfig(systemClassLoader=true)
 @Grab(group='org.postgresql', module='postgresql',  version='9.4-1205-jdbc42')
 @Grab(group='org.pac4j', module='pac4j-core', version='3.9.0')
@@ -38,18 +50,25 @@ def dbDriver   = "org.postgresql.Driver"
 def con = Sql.newInstance(dbUrl, dbUser, dbPassword, dbDriver)
 
 def profiles = []
-con.eachRow("SELECT id, serializedprofile from users;") { row ->
-    profiles << new Profile(row.id, row.serializedprofile)
+try {
+    con.eachRow("SELECT id, serializedprofile from users;") { row ->
+        profiles << new Profile(row.id, row.serializedprofile)
+    }
+} finally {
+    con.close()
 }
 
 ProfileServiceSerializer serializer = new ProfileServiceSerializer(DbProfile.class)
 def updateSql = "UPDATE users SET serializedprofile = ? where id = ?"
-con.withTransaction {
-    profiles.each { profile ->
-        profile.recode(serializer)
-        if (profile.updated) {
-            con.execute updateSql, [profile.serializedProfile, profile.id]
+try {
+    con.withTransaction {
+        profiles.each { profile ->
+            profile.recode(serializer)
+            if (profile.updated) {
+                con.execute updateSql, [profile.serializedProfile, profile.id]
+            }
         }
     }
+} finally {
+    con.close()
 }
-
