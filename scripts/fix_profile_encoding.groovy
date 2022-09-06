@@ -54,13 +54,8 @@ try {
     con.eachRow("SELECT id, serializedprofile from users;") { row ->
         profiles << new Profile(row.id, row.serializedprofile)
     }
-} finally {
-    con.close()
-}
-
-ProfileServiceSerializer serializer = new ProfileServiceSerializer(DbProfile.class)
-def updateSql = "UPDATE users SET serializedprofile = ? where id = ?"
-try {
+    ProfileServiceSerializer serializer = new ProfileServiceSerializer(DbProfile.class)
+    def updateSql = "UPDATE users SET serializedprofile = ? where id = ?"
     con.withTransaction {
         profiles.each { profile ->
             profile.recode(serializer)
