@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+
+## Restore from a backup on a remote server
+set -eE
+
+USAGE="Restore naomi volumes and keys from a remote server
+Usage: $(basename "$0") [-h] <target>
+Options:
+    -h     Show this help text
+Args:
+    target Remote location and path to write backup to in the form [user@]host:[path]"
+
+if [[ -z "$@" ]]; then
+    echo "$USAGE"
+    exit 1
+fi
+OPTIONS=$(getopt -o h -- "$@")
+
+eval set -- "$OPTIONS"
+while true; do
+    case "$1" in
+    -h)
+        echo "$USAGE"
+        exit 0
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+done
+
+TARGET=$1
+IFS=':' read -ra PARTS <<<"$TARGET"
+if [ ${#PARTS[@]} -ne 2 ]; then
+    echo "Target must be in form [user@]host:[path]"
+    exit 1
+fi
+SERVER=${PARTS[0]}
+RESTORE_PATH=${PARTS[1]}
+
+## Verify that we can ssh onto server
+RESULT=0
+ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 $SERVER 'exit 0' || RESULT=$?
+if [ $RESULT -ne 0 ]; then
+    echo "Cannot ssh onto server $SERVER check you have access"
+    exit 1
+fi
+
+if ! $(ssh $SERVER "[ -f $RESTORE_PATH ]"); then
+    echo "Path $RESTORE_PATH does not exist on $SERVER"
+    exit 1
+fi
+
+volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
+
+clean_up() {
+    echo "Restore failed, cleaning up working dir"
+    ssh $SERVER "rm -rf $RESTORE_WORKING_DIR"
+    docker stop restore_pg || true
+    docker rm helper || true
+    exit 1
+}
+
+array_contains() {
+    local seeking=$1
+    shift
+    local in=1
+    for element; do
+        if [[ $element == "$seeking" ]]; then
+            in=0
+            break
+        fi
+    done
+    return $in
+}
+
+assert_file_exists() {
+    if !([ ! -z "$1" ] && [ -f "$1" ]); then
+        echo "Backup archive $1 does not exist"
+        echo "Usage: restore <backup_file>"
+        exit 1
+    fi
+}
+
+assert_all_data_exists() {
+    if !([ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/db_dump.sql" ] && [ -f "$1/redis_backup.tar" ] &&
+        [ -f "$1/prerun_backup.tar" ] && [ -f "$1/results_backup.tar" ] && [ -f "$1/uploads_backup.tar" ]); then
+        echo "Backup archive $1 is incomplete"
+        echo "Usage: restore <backup_file>"
+        exit 1
+    fi
+}
+
+create_volumes() {
+    existing_volumes=($(docker volume ls --format '{{.Name}}'))
+    for volume in ${volumes[@]}; do
+        if array_contains "$volume" "${existing_volumes[@]}"; then
+            echo "Volume '${volume}' already exists, remove volume before running restore"
+            exit 1
+        fi
+    done
+    for volume in ${volumes[@]}; do
+        echo "Creating volume ${volume}"
+        docker volume create ${volume}
+    done
+}
+
+wait_for_postgres() {
+    echo "waiting 10 seconds for postgres"
+    start_ts=$(date +%s)
+    for i in $(seq 10); do
+        # Using pg_ready as:
+        #
+        #   pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+        #
+        # seems heaps nicer but does not actually work properly
+        # because it pulls us up to soon.
+        result=0
+        docker exec -i restore_pg psql -U postgres -d postgres -c "select 1;" >/dev/null 2>&1 || result=$?
+        if [[ $result -eq 0 ]]; then
+            end_ts=$(date +%s)
+            echo "postgres is available after $((end_ts - start_ts)) seconds"
+            break
+        fi
+        sleep 1
+        echo "...still waiting"
+    done
+    if [[ $result -ne 0 ]]; then
+        echo "Postgres did not become available in time"
+        clean_up
+    fi
+}
+
+restore() {
+    create_volumes
+    docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
+    wait_for_postgres
+    ssh $1 "cat $2/db_dump.sql" | docker exec -i restore_pg psql -U postgres postgres >/dev/null
+    docker stop restore_pg
+    ssh $1 "cat $2/redis_backup.tar" | docker run -i --rm -v hint_redis_data:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/prerun_backup.tar" | docker run -i --rm -v hint_prerun:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/results_backup.tar" | docker run -i --rm -v hint_results:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/uploads_backup.tar" | docker run -i --rm -v hint_uploads:/data busybox sh -c "cat | tar -xzf - -C /data"
+}
+
+restore_key() {
+    VAULT_PATH=$(ssh $SERVER "cat $RESTORE_WORKING_DIR/cipher_path")
+    echo "Restoring keys from vault path '$VAULT_PATH'"
+    VAULT_ADDR="https://vault.dide.ic.ac.uk:8200"
+    vault login -address=$VAULT_ADDR -method=github
+    PUBLIC_KEY=$(vault read -address=$VAULT_ADDR -field=public $VAULT_PATH)
+    PRIVATE_KEY=$(vault read -address=$VAULT_ADDR -field=private $VAULT_PATH)
+    docker run --rm -v hint_config:/data busybox sh -c \
+        "mkdir /data/token_key && echo $PUBLIC_KEY | base64 -d >/data/token_key/public_key.der && echo $PRIVATE_KEY | base64 -d >/data/token_key/private_key.der"
+}
+
+RESTORE_DIR=$(dirname "$RESTORE_PATH")
+RESTORE_WORKING_DIR=$RESTORE_DIR/working
+ssh $SERVER "mkdir $RESTORE_WORKING_DIR"
+trap clean_up ERR
+
+ssh $SERVER "tar -xvf $RESTORE_PATH -C $RESTORE_WORKING_DIR"
+ssh $SERVER "md5sum --check $RESTORE_WORKING_DIR/checklist.chk"
+ssh $SERVER "$(declare -f assert_all_data_exists); assert_all_data_exists $RESTORE_WORKING_DIR"
+restore $SERVER $RESTORE_WORKING_DIR
+if $(ssh $SERVER "[ -f $RESTORE_WORKING_DIR/cipher_path ]"); then
+    echo "Do you want to restore cipher keys from vault?"
+    read -p "Restore keys? y/n" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        restore_key
+    fi
+fi
+
+echo "Restore complete"
+ssh $SERVER "rm -rf $RESTORE_WORKING_DIR"
