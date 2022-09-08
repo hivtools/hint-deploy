@@ -67,11 +67,17 @@ clean_up() {
 }
 trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
 
+echo "Backing up postgres data"
 docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
+echo "Backing up redis data"
 docker run --rm --volumes-from hint_redis busybox tar czf - -C /data . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/redis_backup.tar"
+echo "Backing up prerun data"
 docker run --rm --volumes-from hint_hintr busybox tar czf - -C /prerun . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/prerun_backup.tar"
+echo "Backing up results data"
 docker run --rm --volumes-from hint_hintr busybox tar czf - -C /results . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/results_backup.tar"
+echo "Backing up uploads data"
 docker run --rm --volumes-from hint_hintr busybox tar czf - -C /uploads . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"
+echo "Adding md5sum checklist to backup"
 ssh $SERVER "find $BACKUP_WORKING_DIR -type f \( -not -name \"checklist.chk\" \) -exec md5sum \"{}\" + >$BACKUP_WORKING_DIR/checklist.chk"
 
 VAULT_PATH="secret/hint/$HOSTNAME/cipher"
