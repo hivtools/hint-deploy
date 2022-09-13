@@ -140,13 +140,13 @@ restore() {
     ssh $1 "cat $2/db_dump.sql" | docker exec -i restore_pg psql -U postgres postgres >/dev/null
     docker stop restore_pg
     echo "Restoring redis data"
-    ssh $1 "cat $2/redis_backup.tar" | docker run -i --rm -v hint_redis_data:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/redis_backup.tar" | docker run -i --rm -v hint_redis_data:/data busybox sh -c "cat | tar -xf - -C /data"
     echo "Restoring prerun data"
-    ssh $1 "cat $2/prerun_backup.tar" | docker run -i --rm -v hint_prerun:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/prerun_backup.tar" | docker run -i --rm -v hint_prerun:/data busybox sh -c "cat | tar -xf - -C /data"
     echo "Restoring results data"
-    ssh $1 "cat $2/results_backup.tar" | docker run -i --rm -v hint_results:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/results_backup.tar" | docker run -i --rm -v hint_results:/data busybox sh -c "cat | tar -xf - -C /data"
     echo "Restoring uploads data"
-    ssh $1 "cat $2/uploads_backup.tar" | docker run -i --rm -v hint_uploads:/data busybox sh -c "cat | tar -xzf - -C /data"
+    ssh $1 "cat $2/uploads_backup.tar" | docker run -i --rm -v hint_uploads:/data busybox sh -c "cat | tar -xf - -C /data"
 }
 
 restore_key() {
