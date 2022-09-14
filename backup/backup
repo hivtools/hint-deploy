@@ -9,7 +9,7 @@ SCRIPT_DIR="$(
     pwd -P
 )"
 NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$SCRIPT_DIR/$NOW.tar"
+BACKUP_PATH="$SCRIPT_DIR/$HOSTNAME_$NOW.tar"
 BACKUP_WORKING_DIR="$SCRIPT_DIR/working"
 mkdir $BACKUP_WORKING_DIR
 
