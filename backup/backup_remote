@@ -81,10 +81,14 @@ else
     RESTORE_KEY=false
 fi
 
+echo "Building backup container"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+docker build -f $SCRIPT_DIR/Dockerfile -t mrcide/hint-backup:latest
+
 echo "Backing up postgres data"
 docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
 echo "Backing up redis data"
-docker run --rm --volumes-from hint_redis busybox tar cf - -C /data . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/redis_backup.tar"
+docker run --rm --volumes-from hint_redis -v $HOME/.ssh:/ssh mrcide/hint-backup:latest 'tar cf - -C /data . | ssh $SERVER -i /ssh/id_rsa "cat > $BACKUP_WORKING_DIR/redis_backup.tar"'
 echo "Backing up prerun data"
 docker run --rm --volumes-from hint_hintr busybox tar cf - -C /prerun . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/prerun_backup.tar"
 echo "Backing up results data"
