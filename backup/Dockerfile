@@ -1,8 +1,5 @@
 FROM alpine
 
-RUN apt-get update && apt-get -y install --no-install-recommends \
-    openssh \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssh
 
-CMD [ "bash" ]
+CMD [ "sh" ]
