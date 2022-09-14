@@ -119,7 +119,7 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG sh -c \
-    'tar cf - -C /uploads . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"'
+    'tar cf - -C /uploads . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"'
 echo "Adding md5sum checklist to backup"
 ssh $SERVER "find $BACKUP_WORKING_DIR -type f \( -not -name \"checklist.chk\" \) -exec md5sum \"{}\" + >$BACKUP_WORKING_DIR/checklist.chk"
 
