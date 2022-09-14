@@ -165,6 +165,9 @@ ssh $SERVER "mkdir $RESTORE_WORKING_DIR"
 trap clean_up ERR
 
 create_volumes
+ssh $SERVER "tar -xvf $RESTORE_PATH -C $RESTORE_WORKING_DIR"
+ssh $SERVER "md5sum --check $RESTORE_WORKING_DIR/checklist.chk"
+ssh $SERVER "$(declare -f assert_all_data_exists); assert_all_data_exists $RESTORE_WORKING_DIR"
 
 if $(ssh $SERVER "[ -f $RESTORE_WORKING_DIR/cipher_path ]"); then
     echo "Do you want to restore cipher keys from vault?"
@@ -175,9 +178,6 @@ if $(ssh $SERVER "[ -f $RESTORE_WORKING_DIR/cipher_path ]"); then
     fi
 fi
 
-ssh $SERVER "tar -xvf $RESTORE_PATH -C $RESTORE_WORKING_DIR"
-ssh $SERVER "md5sum --check $RESTORE_WORKING_DIR/checklist.chk"
-ssh $SERVER "$(declare -f assert_all_data_exists); assert_all_data_exists $RESTORE_WORKING_DIR"
 restore $SERVER $RESTORE_WORKING_DIR
 
 echo "Restore complete"
