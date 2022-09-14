@@ -76,9 +76,12 @@ echo "another server and have the user entered ADR keys still work then you need
 read -p "Backup keys? y/n" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    RESTORE_KEY=true
-else
-    RESTORE_KEY=false
+    vault login -address=$VAULT_ADDR -method=github
+    PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
+    PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
+    echo "Writing private and public keys to $VAULT_PATH"
+    vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
+    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_WORKING_DIR/cipher_path"
 fi
 
 echo "Building backup container"
@@ -122,15 +125,6 @@ docker run --rm \
     'tar cf - -C /uploads . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"'
 echo "Adding md5sum checklist to backup"
 ssh $SERVER "find $BACKUP_WORKING_DIR -type f \( -not -name \"checklist.chk\" \) -exec md5sum \"{}\" + >$BACKUP_WORKING_DIR/checklist.chk"
-
-if [ $RESTORE_KEY = true ]; then
-    vault login -address=$VAULT_ADDR -method=github
-    PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
-    PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
-    echo "Writing private and public keys to $VAULT_PATH"
-    vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
-    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_WORKING_DIR/cipher_path"
-fi
 
 ssh $SERVER "tar -cf $BACKUP_PATH -C $BACKUP_WORKING_DIR ."
 echo "Backup complete, saved at $SERVER:$BACKUP_PATH"
