@@ -54,7 +54,7 @@ if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
 fi
 
 NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$BACKUP_DIR/$HOSTNAME_$NOW.tar"
+BACKUP_PATH="$BACKUP_DIR/${HOSTNAME}_$NOW.tar"
 BACKUP_WORKING_DIR="$BACKUP_DIR/working"
 ssh $SERVER "mkdir $BACKUP_WORKING_DIR"
 
