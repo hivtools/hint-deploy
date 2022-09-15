@@ -139,28 +139,28 @@ restore() {
         -v hint_redis_data:/data \
         -v $HOME/.ssh:/ssh \
         $IMAGE_TAG \
-        rsync -av $SERVER:$BACKUP_DIR/redis/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
+        rsync -a --info=progress2 $SERVER:$BACKUP_DIR/redis/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
 
     echo "Restoring prerun data"
     docker run --rm \
         -v hint_prerun:/data \
         -v $HOME/.ssh:/ssh \
         $IMAGE_TAG \
-        rsync -av $SERVER:$BACKUP_DIR/prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
+        rsync -a --info=progress2 $SERVER:$BACKUP_DIR/prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
 
     echo "Restoring results data"
     docker run --rm \
         -v hint_results:/data \
         -v $HOME/.ssh:/ssh \
         $IMAGE_TAG \
-        rsync -av $SERVER:$BACKUP_DIR/results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
+        rsync -a --info=progress2 $SERVER:$BACKUP_DIR/results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
 
     echo "Restoring uploads data"
     docker run --rm \
         -v hint_uploads:/data \
         -v $HOME/.ssh:/ssh \
         $IMAGE_TAG \
-        rsync -av $SERVER:$BACKUP_DIR/uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
+        rsync -a --info=progress2 $SERVER:$BACKUP_DIR/uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
 }
 
 restore_key() {
