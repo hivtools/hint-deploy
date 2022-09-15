@@ -126,7 +126,7 @@ restore() {
     docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
     wait_for_postgres
     echo "Restoring database"
-    ssh $1 "cat $2/db_dump.sql" | docker exec -i restore_pg psql -U postgres postgres >/dev/null
+    ssh $SERVER "cat $BACKUP_DIR/db_dump.sql" | docker exec -i restore_pg psql -U postgres postgres >/dev/null
     docker stop restore_pg
 
     echo "Building backup container"
@@ -187,6 +187,6 @@ if $(ssh $SERVER "[ -f $BACKUP_DIR/cipher_path ]"); then
     fi
 fi
 
-restore $SERVER $BACKUP_DIR
+restore
 
 echo "Restore complete"
