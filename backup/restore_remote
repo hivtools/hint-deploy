@@ -1,13 +1,62 @@
 #!/usr/bin/env bash
 
-## Restore from a backup
+## Restore from a backup on a remote server
 set -eE
+
+USAGE="Restore naomi volumes and keys from a remote server
+Usage: $(basename "$0") [-h] <target>
+Options:
+    -h     Show this help text
+Args:
+    target Remote location and path to write backup to in the form [user@]host:[path]"
+
+if [[ -z "$@" ]]; then
+    echo "$USAGE"
+    exit 1
+fi
+OPTIONS=$(getopt -o h -- "$@")
+
+eval set -- "$OPTIONS"
+while true; do
+    case "$1" in
+    -h)
+        echo "$USAGE"
+        exit 0
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+done
+
+TARGET=$1
+IFS=':' read -ra PARTS <<<"$TARGET"
+if [ ${#PARTS[@]} -ne 2 ]; then
+    echo "Target must be in form [user@]host:[path]"
+    exit 1
+fi
+SERVER=${PARTS[0]}
+RESTORE_PATH=${PARTS[1]}
+
+## Verify that we can ssh onto server
+RESULT=0
+ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 $SERVER 'exit 0' || RESULT=$?
+if [ $RESULT -ne 0 ]; then
+    echo "Cannot ssh onto server $SERVER check you have access"
+    exit 1
+fi
+
+if ! $(ssh $SERVER "[ -f $RESTORE_PATH ]"); then
+    echo "Path $RESTORE_PATH does not exist on $SERVER"
+    exit 1
+fi
 
 volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
 
 clean_up() {
     echo "Restore failed, cleaning up working dir"
-    rm -rf $RESTORE_WORKING_DIR
+    ssh $SERVER "rm -rf $RESTORE_WORKING_DIR"
     docker stop restore_pg || true
     docker rm helper || true
     exit 1
@@ -87,16 +136,21 @@ restore() {
     create_volumes
     docker run --rm -d -v hint_db_data:/pgdata -e POSTGRES_PASSWORD=password -e PGDATA=/pgdata --name restore_pg postgres:10.3
     wait_for_postgres
-    docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql >/dev/null
+    echo "Restoring database"
+    ssh $1 "cat $2/db_dump.sql" | docker exec -i restore_pg psql -U postgres postgres >/dev/null
     docker stop restore_pg
-    docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xf /backup/redis_backup.tar -C /data
-    docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xf /backup/prerun_backup.tar -C /data
-    docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xf /backup/results_backup.tar -C /data
-    docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xf /backup/uploads_backup.tar -C /data
+    echo "Restoring redis data"
+    ssh $1 "cat $2/redis_backup.tar" | docker run -i --rm -v hint_redis_data:/data busybox sh -c "cat | tar -xf - -C /data"
+    echo "Restoring prerun data"
+    ssh $1 "cat $2/prerun_backup.tar" | docker run -i --rm -v hint_prerun:/data busybox sh -c "cat | tar -xf - -C /data"
+    echo "Restoring results data"
+    ssh $1 "cat $2/results_backup.tar" | docker run -i --rm -v hint_results:/data busybox sh -c "cat | tar -xf - -C /data"
+    echo "Restoring uploads data"
+    ssh $1 "cat $2/uploads_backup.tar" | docker run -i --rm -v hint_uploads:/data busybox sh -c "cat | tar -xf - -C /data"
 }
 
 restore_key() {
-    VAULT_PATH=$(cat $RESTORE_WORKING_DIR/cipher_path)
+    VAULT_PATH=$(ssh $SERVER "cat $RESTORE_WORKING_DIR/cipher_path")
     echo "Restoring keys from vault path '$VAULT_PATH'"
     VAULT_ADDR="https://vault.dide.ic.ac.uk:8200"
     vault login -address=$VAULT_ADDR -method=github
@@ -106,17 +160,12 @@ restore_key() {
         "mkdir /data/token_key && echo $PUBLIC_KEY | base64 -d >/data/token_key/public_key.der && echo $PRIVATE_KEY | base64 -d >/data/token_key/private_key.der"
 }
 
-assert_file_exists $1
-RESTORE_DIR="$(
-    cd "$(dirname "$1")"
-    pwd
-)"
-RESTORE_PATH=$RESTORE_DIR/$(basename "$1")
+RESTORE_DIR=$(dirname "$RESTORE_PATH")
 RESTORE_WORKING_DIR=$RESTORE_DIR/working
-mkdir $RESTORE_WORKING_DIR
+ssh $SERVER "mkdir $RESTORE_WORKING_DIR"
 trap clean_up ERR
 
-if [ -f "$RESTORE_WORKING_DIR/cipher_path" ]; then
+if $(ssh $SERVER "[ -f $RESTORE_WORKING_DIR/cipher_path ]"); then
     echo "Do you want to restore cipher keys from vault?"
     read -p "Restore keys? y/n" -n 1 -r
     echo
@@ -127,13 +176,13 @@ if [ -f "$RESTORE_WORKING_DIR/cipher_path" ]; then
     fi
 fi
 
-tar -xvf $1 -C $RESTORE_WORKING_DIR
-md5sum --check $RESTORE_WORKING_DIR/checklist.chk
-assert_all_data_exists $RESTORE_WORKING_DIR
-restore $RESTORE_WORKING_DIR
+ssh $SERVER "tar -xvf $RESTORE_PATH -C $RESTORE_WORKING_DIR"
+ssh $SERVER "md5sum --check $RESTORE_WORKING_DIR/checklist.chk"
+ssh $SERVER "$(declare -f assert_all_data_exists); assert_all_data_exists $RESTORE_WORKING_DIR"
+restore $SERVER $RESTORE_WORKING_DIR
 if [ $RESTORE_KEY = true ]; then
     restore_key
 fi
 
 echo "Restore complete"
-rm -rf $RESTORE_WORKING_DIR
+ssh $SERVER "rm -rf $RESTORE_WORKING_DIR"

@@ -56,6 +56,12 @@ class HintConfig:
         self.hint_oauth2_login_method = config.config_string(
             dat, ["hint", "oauth2_login_method"], True, "")
 
+        self.hint_oauth2_client_adr_url = config.config_string(
+            dat, ["hint", "oauth2_client_adr_url"], True, "")
+
+        self.hint_oauth2_client_audience = config.config_string(
+            dat, ["hint", "oauth2_client_audience"], True, "")
+
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
@@ -277,7 +283,9 @@ def hint_configure(container, cfg):
         "oauth2_client_id": cfg.hint_oauth2_client_id,
         "oauth2_client_secret": cfg.hint_oauth2_client_secret,
         "oauth2_client_url": cfg.hint_oauth2_client_url,
-        "oauth2_login_method": cfg.hint_oauth2_login_method
+        "oauth2_login_method": cfg.hint_oauth2_login_method,
+        "oauth2_client_adr_url": cfg.hint_oauth2_client_adr_url,
+        "oauth2_client_audience ": cfg.hint_oauth2_client_audience
     }
 
     if cfg.hint_adr_url is not None:
