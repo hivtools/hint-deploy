@@ -97,7 +97,7 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG \
-    rsync -av /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/redis
+    rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/redis
 
 echo "*** Backing up prerun data"
 docker run --rm \
@@ -106,7 +106,7 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG \
-    rsync -av /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/prerun
+    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/prerun
 
 echo "*** Backing up results data"
 docker run --rm \
@@ -115,7 +115,7 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG \
-    rsync -av /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/results
+    rsync -a --info=progress2 /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/results
 
 echo "*** Backing up uploads data"
 docker run --rm \
@@ -124,4 +124,4 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG \
-    rsync -av /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/uploads
+    rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/uploads
