@@ -126,4 +126,4 @@ docker run --rm \
     $IMAGE_TAG \
     rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/uploads
 
-echo "Backup complete at $SERVER:$BACKUP_PATH"
+echo "Backup complete at $SERVER:$BACKUP_DIR"
