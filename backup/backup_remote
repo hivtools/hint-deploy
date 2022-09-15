@@ -87,10 +87,10 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 IMAGE_TAG=mrcide/hint-backup:latest
 docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
 
-echo "Backing up postgres data"
+echo "*** Backing up postgres data"
 docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
 
-echo "Backing up redis data"
+echo "*** Backing up redis data"
 docker run --rm \
     --volumes-from hint_redis \
     -v $HOME/.ssh:/ssh \
@@ -99,7 +99,7 @@ docker run --rm \
     $IMAGE_TAG \
     rsync -av /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/redis
 
-echo "Backing up prerun data"
+echo "*** Backing up prerun data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
@@ -108,20 +108,20 @@ docker run --rm \
     $IMAGE_TAG \
     rsync -av /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/prerun
 
-echo "Backing up results data"
+echo "*** Backing up results data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
-    $IMAGE_TAG sh -c \
+    $IMAGE_TAG \
     rsync -av /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/results
 
-echo "Backing up uploads data"
+echo "*** Backing up uploads data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
-    $IMAGE_TAG sh -c \
+    $IMAGE_TAG \
     rsync -av /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/uploads
