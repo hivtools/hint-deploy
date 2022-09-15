@@ -53,8 +53,8 @@ class HintConfig:
         self.hint_oauth2_client_url = config.config_string(
             dat, ["hint", "oauth2_client_url"], True, "")
 
-        self.hint_oauth2_login_method = config.config_string(
-            dat, ["hint", "oauth2_login_method"], True, "")
+        self.hint_oauth2_login_method = config.config_boolean(
+            dat, ["hint", "oauth2_login_method"], True, False)
 
         self.hint_oauth2_client_adr_url = config.config_string(
             dat, ["hint", "oauth2_client_adr_url"], True, "")
