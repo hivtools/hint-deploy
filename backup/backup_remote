@@ -54,8 +54,8 @@ if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
 fi
 
 NOW=$(date +'%Y%d%m-%H%M%S')
-BACKUP_WORKING_DIR="$BACKUP_DIR/${HOSTNAME}/${NOW}"
-ssh $SERVER "mkdir -p $BACKUP_WORKING_DIR"
+BACKUP_DIR="$BACKUP_DIR/${HOSTNAME}/${NOW}"
+ssh $SERVER "mkdir -p $BACKUP_DIR"
 
 clean_up() {
     local lineno=$1
@@ -79,7 +79,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
     echo "Writing private and public keys to $VAULT_PATH"
     vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
-    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_WORKING_DIR/cipher_path"
+    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_DIR/cipher_path"
 fi
 
 echo "Building backup container"
@@ -88,40 +88,42 @@ IMAGE_TAG=mrcide/hint-backup:latest
 docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
 
 echo "*** Backing up postgres data"
-docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
+docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_DIR/db_dump.sql"
 
 echo "*** Backing up redis data"
 docker run --rm \
     --volumes-from hint_redis \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
-    -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
+    -e BACKUP_DIR=$BACKUP_DIR \
     $IMAGE_TAG \
-    rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/redis
+    rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/redis
 
 echo "*** Backing up prerun data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
-    -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
+    -e BACKUP_DIR=$BACKUP_DIR \
     $IMAGE_TAG \
-    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/prerun
+    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/prerun
 
 echo "*** Backing up results data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
-    -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
+    -e BACKUP_DIR=$BACKUP_DIR \
     $IMAGE_TAG \
-    rsync -a --info=progress2 /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/results
+    rsync -a --info=progress2 /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/results
 
 echo "*** Backing up uploads data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
-    -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
+    -e BACKUP_DIR=$BACKUP_DIR \
     $IMAGE_TAG \
-    rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/uploads
+    rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/uploads
+
+echo "Backup complete at $SERVER:$BACKUP_PATH"
