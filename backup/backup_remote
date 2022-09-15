@@ -2,7 +2,7 @@
 
 ## Backup to a remote server volumes of data used by Naomi, namely:
 ## db data, redis data, uploaded files, prerun files and results
-set -eE
+set -euE
 
 USAGE="Backup naomi volumes and keys to a remote server
 Usage: $(basename "$0") [-h] <target>
@@ -53,16 +53,14 @@ if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
     exit 1
 fi
 
-NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$BACKUP_DIR/${HOSTNAME}_$NOW.tar"
-BACKUP_WORKING_DIR="$BACKUP_DIR/working"
-ssh $SERVER "mkdir $BACKUP_WORKING_DIR"
+NOW=$(date +'%Y%d%m-%H%M%S')
+BACKUP_WORKING_DIR="$BACKUP_DIR/${HOSTNAME}/${NOW}"
+ssh $SERVER "mkdir -p $BACKUP_WORKING_DIR"
 
 clean_up() {
     local lineno=$1
     local msg=$2
     echo "Backup failed at $lineno: $msg"
-    ssh $SERVER "rm -rf $BACKUP_WORKING_DIR"
     exit 1
 }
 trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
@@ -91,22 +89,25 @@ docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
 
 echo "Backing up postgres data"
 docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
+
 echo "Backing up redis data"
 docker run --rm \
     --volumes-from hint_redis \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
-    $IMAGE_TAG sh -c \
-    'tar cf - -C /data . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/redis_backup.tar"'
+    $IMAGE_TAG \
+    rsync -av /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/redis
+
 echo "Backing up prerun data"
 docker run --rm \
     --volumes-from hint_hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
-    $IMAGE_TAG sh -c \
-    'tar cf - -C /prerun . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/prerun_backup.tar"'
+    $IMAGE_TAG \
+    rsync -av /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/prerun
+
 echo "Backing up results data"
 docker run --rm \
     --volumes-from hint_hintr \
@@ -114,7 +115,8 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG sh -c \
-    'tar cf - -C /results . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/results_backup.tar"'
+    rsync -av /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/results
+
 echo "Backing up uploads data"
 docker run --rm \
     --volumes-from hint_hintr \
@@ -122,10 +124,4 @@ docker run --rm \
     -e SERVER=$SERVER \
     -e BACKUP_WORKING_DIR=$BACKUP_WORKING_DIR \
     $IMAGE_TAG sh -c \
-    'tar cf - -C /uploads . | ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"'
-echo "Adding md5sum checklist to backup"
-ssh $SERVER "find $BACKUP_WORKING_DIR -type f \( -not -name \"checklist.chk\" \) -exec md5sum \"{}\" + >$BACKUP_WORKING_DIR/checklist.chk"
-
-ssh $SERVER "tar -cf $BACKUP_PATH -C $BACKUP_WORKING_DIR ."
-echo "Backup complete, saved at $SERVER:$BACKUP_PATH"
-ssh $SERVER "rm -rf $BACKUP_WORKING_DIR"
+    rsync -av /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_WORKING_DIR/uploads
