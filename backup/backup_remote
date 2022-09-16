@@ -2,7 +2,7 @@
 
 ## Backup to a remote server volumes of data used by Naomi, namely:
 ## db data, redis data, uploaded files, prerun files and results
-set -eE
+set -euE
 
 USAGE="Backup naomi volumes and keys to a remote server
 Usage: $(basename "$0") [-h] <target>
@@ -53,16 +53,14 @@ if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
     exit 1
 fi
 
-NOW=$(date +'%Y_%d_%m-%H_%M_%S')
-BACKUP_PATH="$BACKUP_DIR/$NOW.tar"
-BACKUP_WORKING_DIR="$BACKUP_DIR/working"
-ssh $SERVER "mkdir $BACKUP_WORKING_DIR"
+NOW=$(date +'%Y%d%m-%H%M%S')
+BACKUP_DIR="$BACKUP_DIR/${HOSTNAME}/${NOW}"
+ssh $SERVER "mkdir -p $BACKUP_DIR"
 
 clean_up() {
     local lineno=$1
     local msg=$2
     echo "Backup failed at $lineno: $msg"
-    ssh $SERVER "rm -rf $BACKUP_WORKING_DIR"
     exit 1
 }
 trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
@@ -76,33 +74,56 @@ echo "another server and have the user entered ADR keys still work then you need
 read -p "Backup keys? y/n" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    RESTORE_KEY=true
-else
-    RESTORE_KEY=false
-fi
-
-echo "Backing up postgres data"
-docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_WORKING_DIR/db_dump.sql"
-echo "Backing up redis data"
-docker run --rm --volumes-from hint_redis busybox tar cf - -C /data . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/redis_backup.tar"
-echo "Backing up prerun data"
-docker run --rm --volumes-from hint_hintr busybox tar cf - -C /prerun . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/prerun_backup.tar"
-echo "Backing up results data"
-docker run --rm --volumes-from hint_hintr busybox tar cf - -C /results . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/results_backup.tar"
-echo "Backing up uploads data"
-docker run --rm --volumes-from hint_hintr busybox tar cf - -C /uploads . | ssh $SERVER "cat > $BACKUP_WORKING_DIR/uploads_backup.tar"
-echo "Adding md5sum checklist to backup"
-ssh $SERVER "find $BACKUP_WORKING_DIR -type f \( -not -name \"checklist.chk\" \) -exec md5sum \"{}\" + >$BACKUP_WORKING_DIR/checklist.chk"
-
-if [ $RESTORE_KEY = true ]; then
     vault login -address=$VAULT_ADDR -method=github
     PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
     PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
     echo "Writing private and public keys to $VAULT_PATH"
     vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
-    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_WORKING_DIR/cipher_path"
+    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_DIR/cipher_path"
 fi
 
-ssh $SERVER "tar -cf $BACKUP_PATH -C $BACKUP_WORKING_DIR ."
-echo "Backup complete, saved at $SERVER:$BACKUP_PATH"
-ssh $SERVER "rm -rf $BACKUP_WORKING_DIR"
+echo "Building backup container"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+IMAGE_TAG=mrcide/hint-backup:latest
+docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
+
+echo "*** Backing up postgres data"
+docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_DIR/db_dump.sql"
+
+echo "*** Backing up redis data"
+docker run --rm \
+    --volumes-from hint_redis \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/redis
+
+echo "*** Backing up prerun data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/prerun
+
+echo "*** Backing up results data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/results
+
+echo "*** Backing up uploads data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/uploads
+
+echo "Backup complete at $SERVER:$BACKUP_DIR"
