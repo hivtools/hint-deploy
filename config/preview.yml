@@ -20,5 +20,6 @@ hint:
   oauth2_client_id: VAULT:secret/hint/oauth2/production:id
   oauth2_client_secret: VAULT:secret/hint/oauth2/production:secret
   oauth2_client_url: VAULT:secret/hint/oauth2/production:url
+  oauth2_client_audience: naomi
   email:
     password: VAULT:secret/hint/email:password
