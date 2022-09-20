@@ -16,11 +16,9 @@ vault:
 
 hint:
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
-  oauth2_client_id: VAULT:secret/hint/oauth2/auth0:id
-  oauth2_client_secret: VAULT:secret/hint/oauth2/auth0:secret
-  oauth2_client_url: VAULT:secret/hint/oauth2/auth0:url
-  oauth2_client_adr_url: https://naomi-preview.dide.ic.ac.uk/resource-server
-  oauth2_client_audience: naomi
-  oauth2_login_method: false
+  oauth2_login_method: true
+  oauth2_client_id: VAULT:secret/hint/oauth2/production:id
+  oauth2_client_secret: VAULT:secret/hint/oauth2/production:secret
+  oauth2_client_url: VAULT:secret/hint/oauth2/production:url
   email:
     password: VAULT:secret/hint/email:password
