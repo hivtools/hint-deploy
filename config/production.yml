@@ -20,8 +20,10 @@ proxy:
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
-    method: github
-
+    method: approle
+    args:
+      role_id: $VAULT_AUTH_ROLE_ID
+      secret_id: $VAULT_AUTH_SECRET_ID
 users:
   add_test_user: false
 
