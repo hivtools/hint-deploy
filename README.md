@@ -41,6 +41,26 @@ Options:
 
 Once a configuration is set during `start`, it will be reused by subsequent commands (`stop`, `status`, `upgrade`, `user`, etc) and removed during `destroy`.  The configuration usage information is stored in `config/.last_deploy`.
 
+## Testing
+
+hint-deploy uses [AppRole](https://developer.hashicorp.com/vault/docs/auth/approle) to authenticate with the vault. To run tests locally you will need to set `VAULT_AUTH_ROLE_ID` and `VAULT_AUTH_SECRET_ID` to valid role-id and secret-it.
+
+To get them run
+
+```
+vault login -method=github
+vault read auth/approle/role/hint-deploy/role-id
+export VAULT_AUTH_ROLE_ID=role-id
+vault write -f auth/approle/role/hint-deploy/secret-id
+export VAULT_AUTH_SECRET_ID=secret-id
+```
+ensure they are available as env vars wherever you run pytest from. These are available to the CI as repo secrets.
+
+You can test it by trying to login via
+```
+vault write auth/approle/login role_id=$VAULT_AUTH_ROLE_ID secret_id=$VAULT_AUTH_SECRET_ID
+```
+
 ## Deployment onto the servers
 
 We have two copies of hint deployed:
