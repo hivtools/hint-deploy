@@ -130,9 +130,9 @@ def hint_constellation(cfg):
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
     hintr_ports = [8888] if cfg.hint_expose else None
-    ## See https://www.elastic.co/guide/en/beats/filebeat/current/configuration-autodiscover-hints.html
-    ## for details of how labels are used by filebeat autodiscover
-    labels = {"co.elastic.logs/json.add_error_key": True}
+    # See https://www.elastic.co/guide/en/beats/filebeat/current/configuration-autodiscover-hints.html
+    # for details of how labels are used by filebeat autodiscover
+    labels = {"co.elastic.logs/json.add_error_key": "true"}
     hintr = constellation.ConstellationContainer(
         "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
         ports=hintr_ports, environment=hintr_env, labels=labels)
