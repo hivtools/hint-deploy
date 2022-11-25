@@ -20,6 +20,8 @@ def test_start_hint():
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
     obj.start()
+    hint_deploy.loadbalancer_configure(obj, cfg)
+    time.sleep(5)  # Wait for loadbalancer to reload config
 
     res = requests.get("http://localhost:8080")
 
@@ -39,6 +41,7 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 1
@@ -78,7 +81,7 @@ def test_start_hint():
              '"http://localhost:8888/hintr/worker/status"),' + \
              '"text", encoding="UTF-8"))'
     args = ["Rscript", "-e", script]
-    hintr = obj.containers.get("hintr", obj.prefix)
+    hintr = obj.containers.get("hintr_api", obj.prefix)[0]
     result = docker_util.exec_safely(hintr, args).output
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
@@ -95,6 +98,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
     assert len(docker_util.containers_matching("hint_worker_", False)) == 0
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 0
@@ -177,6 +181,8 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
+    assert len(docker_util.containers_matching("hint_hintr_api_", True)) == 2
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 4
     assert len(docker_util.containers_matching(
@@ -213,6 +219,7 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 1

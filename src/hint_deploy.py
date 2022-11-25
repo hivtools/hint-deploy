@@ -32,7 +32,17 @@ class HintConfig:
             dat, ["hintr", "calibrate_workers"])
         self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
+        self.hintr_port = config.config_integer(
+            dat, ["hintr", "port"]
+        )
+        self.hintr_loadbalancer_tag = config.config_string(
+            dat, ["hintr-loadbalancer", "tag"], True, default_tag)
+        self.api_instances = config.config_integer(
+            dat, ["hintr-loadbalancer", "api_instances"])
 
+        self.hintr_loadbalancer_ref = constellation.ImageReference(
+            "mrcide", "hintr-loadbalancer", self.hintr_loadbalancer_tag
+        )
         self.hintr_ref = constellation.ImageReference(
             "mrcide", "hintr", self.hintr_tag)
         self.hintr_worker_ref = constellation.ImageReference(
@@ -122,22 +132,28 @@ def hint_constellation(cfg):
     hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0",
                   "--results-dir=/results",
-                  "--prerun-dir=/prerun"]
+                  "--prerun-dir=/prerun",
+                  "--port=" + str(cfg.hintr_port)]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
                     constellation.ConstellationMount("results", "/results"),
                     constellation.ConstellationMount("prerun", "/prerun")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
-    hintr_ports = [8888] if cfg.hint_expose else None
     # See https://www.elastic.co/guide/en/beats/filebeat/current/configuration-autodiscover-hints.html # noqa
     # for details of how labels are used by filebeat autodiscover
     labels = {"co.elastic.logs/json.add_error_key": "true"}
-    hintr = constellation.ConstellationContainer(
-        "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
-        ports=hintr_ports, environment=hintr_env, labels=labels)
+    hintr = constellation.ConstellationService(
+        "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args, mounts=hintr_mounts,
+        environment=hintr_env, labels=labels)
 
-    # 4. hint
+    # 4. hintr load balancer
+    hintr_loadbalancer_ref = cfg.hintr_loadbalancer_ref
+    hintr_loadbalancer_ports = [8888] if cfg.hint_expose else None
+    load_balancer = constellation.ConstellationContainer(
+        "hintr", hintr_loadbalancer_ref, ports=hintr_loadbalancer_ports)
+
+    # 5. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
     hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
@@ -147,7 +163,7 @@ def hint_constellation(cfg):
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
         configure=hint_configure)
 
-    # 5. proxy
+    # 6. proxy
     proxy_ref = constellation.ImageReference("mrcide", "hint-proxy", "latest")
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
@@ -158,19 +174,20 @@ def hint_constellation(cfg):
         "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
-    # 6. calibrate worker
+    # 7. calibrate worker
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationService(
         "calibrate_worker", worker_ref, cfg.hintr_calibrate_workers,
         args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
 
-    # 7. hintr workers
+    # 9. hintr workers
     worker = constellation.ConstellationService(
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
 
-    containers = [db, redis, hintr, hint, proxy, calibrate_worker, worker]
+    containers = [db, redis, hintr, load_balancer,
+                  hint, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes,
@@ -189,10 +206,11 @@ def hint_start(obj, cfg, args):
         pull = args["pull_images"]
         print("Adding test user '{}'".format(email))
         hint_user(cfg, "add-user", email, pull, "password")
+        loadbalancer_configure(obj, cfg)
 
 
 def hint_upgrade_hintr(obj):
-    hintr = obj.containers.find("hintr")
+    hintr = obj.containers.find("hintr_api")
     calibrate_worker = obj.containers.find("calibrate_worker")
     worker = obj.containers.find("worker")
     container = hintr.get(obj.prefix)
@@ -317,7 +335,19 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
+def loadbalancer_configure(constellation, cfg):
+    print("[hint] Configuring loadbalancer")
+    loadbalancer = constellation.containers.get("hintr", cfg.prefix)
+    api_instances = constellation.containers.get("hintr_api", cfg.prefix)
+    args = []
+    for instance in api_instances:
+        args += ["--address", instance.name]
+    docker_util.exec_safely(
+        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+
 # It can take a while for the container to come up
+
+
 def wait(f, message, timeout=30, poll=0.1):
     for i in range(math.ceil(timeout / poll)):
         try:
