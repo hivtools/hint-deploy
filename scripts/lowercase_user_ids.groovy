@@ -29,7 +29,7 @@ class Profile {
         INSERT into users (id, username) VALUES ('${new_id}', '${new_id}');
         UPDATE user_session set user_id = '${new_id}' where user_id = '${old_id}';
         UPDATE adr_key set user_id = '${new_id}' where user_id = '${old_id}';
-        UPDATE project set shared_by = '${new_id}' where user_id = '${old_id}';
+        UPDATE project set shared_by = '${new_id}' where shared_by = '${old_id}';
         UPDATE project set user_id = '${new_id}' where user_id = '${old_id}';
 
         DELETE from users where id = '${old_id}';
