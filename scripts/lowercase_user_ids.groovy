@@ -23,16 +23,19 @@ class Profile {
             println "Not migrating " + this.old_id + " as account already exists for id " + this.new_id
             return
         }
+        def new_id = this.new_id
+        def old_id = this.old_id
         def updateSql = """
-        INSERT into users (id, username) VALUES (:new_id, :new_id);
-        UPDATE user_session set user_id = :new_id where user_id = :old_id;
-        UPDATE adr_key set user_id = :new_id where user_id = :old_id;
-        UPDATE project set shared_by = :new_id where user_id = :old_id;
-        UPDATE project set user_id = :new_id where user_id = :old_id;
+        INSERT into users (id, username) VALUES ('${new_id}', '${new_id}');
+        UPDATE user_session set user_id = '${new_id}' where user_id = '${old_id}';
+        UPDATE adr_key set user_id = '${new_id}' where user_id = '${old_id}';
+        UPDATE project set shared_by = '${new_id}' where user_id = '${old_id}';
+        UPDATE project set user_id = '${new_id}' where user_id = '${old_id}';
 
-        DELETE from users where id = :old_id;
+        DELETE from users where id = '${old_id}';
         """
-        //con.execute([new_id: this.new_id, old_id: this.new_id], updateSql)
+        def sql = updateSql.toString()
+        con.execute sql
         println "Migrated " + this.old_id + " to " + this.new_id
         return
     }
