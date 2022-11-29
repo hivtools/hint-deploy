@@ -246,7 +246,7 @@ def hint_upgrade_all(obj, db_tag):
     loadbalancer_configure(obj)
 
 
-def hint_stop(obj):
+def hint_stop(obj, args):
     # Loadbalancer can take >10s to stop if we stop it via
     # docker stop making the ./hint stop error
     # We don't rely on saving any data from the loadbalancer
@@ -257,6 +257,7 @@ def hint_stop(obj):
     docker_util.container_stop(
         loadbalancer_container, True, loadbalancer_container.name)
     docker_util.container_remove_wait(loadbalancer_container)
+    obj.stop(args)
 
 
 def pull_migrate_image(db_tag):

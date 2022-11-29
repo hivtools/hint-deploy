@@ -172,9 +172,8 @@ def main(argv=None):
     elif action == "stop":
         verify_data_loss(action, args, cfg)
         hint_stop(obj)
+        if args["remove_volumes"]:
+            remove_config(path)
     else:
         verify_data_loss(action, args, cfg)
         obj.__getattribute__(action)(**args)
-
-        if action == "stop" and args["remove_volumes"]:
-            remove_config(path)
