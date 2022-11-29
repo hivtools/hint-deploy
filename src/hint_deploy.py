@@ -143,8 +143,8 @@ def hint_constellation(cfg):
     # for details of how labels are used by filebeat autodiscover
     labels = {"co.elastic.logs/json.add_error_key": "true"}
     hintr = constellation.ConstellationService(
-        "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args, mounts=hintr_mounts,
-        environment=hintr_env, labels=labels)
+        "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args,
+        mounts=hintr_mounts, environment=hintr_env, labels=labels)
 
     # 4. hintr load balancer
     hintr_loadbalancer_ref = cfg.hintr_loadbalancer_ref
@@ -359,6 +359,8 @@ def loadbalancer_configure(constellation):
         loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
 # It can take a while for the container to come up
+
+
 def wait(f, message, timeout=30, poll=0.1):
     for i in range(math.ceil(timeout / poll)):
         try:
