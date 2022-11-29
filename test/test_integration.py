@@ -178,7 +178,7 @@ def test_update_hintr_and_all():
     assert "Pulling docker image hintr" in p
     assert "Pulling docker image hintr_api" in p
     assert "Pulling docker image db-migrate" not in p
-    assert "Stopping hint_hintr" in p
+    assert "Killing hint_hintr" in p
     assert "Stopping hint_hintr_api_" in p
     assert "Starting hintr" in p
     assert "Starting *service* hintr_api" in p
@@ -279,3 +279,23 @@ def test_start_pulls_db_migrate():
     assert "Pulling docker image db-migrate" not in p
 
     obj.destroy()
+
+
+def test_stop_kills_loadbalancer():
+    hint_cli.main(["start"])
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_cli.main(["stop"])
+
+    p = f.getvalue()
+    assert "Killing hint_hintr" in p
+
+    assert not docker_util.container_exists("hint_hintr")
+    assert not docker_util.container_exists("hint_db")
+    assert not docker_util.container_exists("hint_redis")
+    assert not docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker_", False)) == 0

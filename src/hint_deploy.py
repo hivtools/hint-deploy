@@ -230,7 +230,7 @@ def hint_upgrade_hintr(obj):
                 print("Stopping {}".format(container.name))
                 container.exec_run(["hintr_stop"])
             docker_util.container_remove_wait(container)
-    print("Stopping {}".format(loadbalancer_container.name))
+    print("Killing {}".format(loadbalancer_container.name))
     docker_util.container_stop(
         loadbalancer_container, True, loadbalancer_container.name)
     docker_util.container_remove_wait(loadbalancer_container)
@@ -244,6 +244,19 @@ def hint_upgrade_all(obj, db_tag):
     pull_migrate_image(db_tag)
     obj.restart(pull_images=True)
     loadbalancer_configure(obj)
+
+
+def hint_stop(obj):
+    # Loadbalancer can take >10s to stop if we stop it via
+    # docker stop making the ./hint stop error
+    # We don't rely on saving any data from the loadbalancer
+    # so we can just kill the loadbalancer
+    loadbalancer = obj.containers.find("hintr")
+    loadbalancer_container = loadbalancer.get(obj.prefix)
+    print("Killing {}".format(loadbalancer_container.name))
+    docker_util.container_stop(
+        loadbalancer_container, True, loadbalancer_container.name)
+    docker_util.container_remove_wait(loadbalancer_container)
 
 
 def pull_migrate_image(db_tag):
