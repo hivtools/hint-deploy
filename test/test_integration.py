@@ -5,7 +5,9 @@ import os.path
 import pytest
 import requests
 import time
+import logging
 
+from requests.adapters import HTTPAdapter, Retry
 from contextlib import redirect_stdout
 from unittest import mock
 
@@ -14,6 +16,15 @@ import constellation.docker_util as docker_util
 
 from src import hint_cli, hint_deploy
 
+# Retry requests, the loadbalancer can take
+# a few seconds to update after being configured.
+# This will retry with an increasing backoff 0s, 2s, 4s, ...
+# see https://stackoverflow.com/a/35636367
+logging.basicConfig(level=logging.DEBUG)
+s = requests.Session()
+retries = Retry(total=10, backoff_factor=1, status_forcelist=[502, 503, 504])
+s.mount('http://', HTTPAdapter(max_retries=retries))
+
 
 def test_start_hint():
     cfg = hint_deploy.HintConfig("config")
@@ -21,14 +32,13 @@ def test_start_hint():
     obj.status()
     obj.start()
     hint_deploy.loadbalancer_configure(obj)
-    time.sleep(5)  # Wait for loadbalancer to reload config
 
-    res = requests.get("http://localhost:8080")
+    res = s.get("http://localhost:8080")
 
     assert res.status_code == 200
     assert "Naomi" in res.content.decode("UTF-8")
 
-    res = requests.get("http://localhost:8888")
+    res = s.get("http://localhost:8888")
 
     assert res.status_code == 200
 
@@ -114,7 +124,7 @@ def test_start_hint_from_cli():
         f.write("proxy:\n host: localhost")
 
     hint_cli.main(["start", "other"])
-    res = requests.get("http://localhost:8080")
+    res = s.get("http://localhost:8080")
     assert res.status_code == 200
     assert "Naomi" in res.content.decode("UTF-8")
     assert os.path.exists("config/.last_deploy")
@@ -195,8 +205,7 @@ def test_update_hintr_and_all():
         "hint_calibrate_worker", True)) == 2
 
     # Can access hintr endpoints
-    time.sleep(5)  # Wait for loadbalancer to reload config
-    res = requests.get("http://localhost:8888")
+    res = s.get("http://localhost:8888")
     assert res.status_code == 200
     assert "Welcome to hintr" in res.content.decode("UTF-8")
 
@@ -236,8 +245,7 @@ def test_update_hintr_and_all():
         "hint_calibrate_worker_", False)) == 1
 
     # Can access hintr endpoints
-    time.sleep(5)  # Wait for loadbalancer to reload config
-    res = requests.get("http://localhost:8888")
+    res = s.get("http://localhost:8888")
     assert res.status_code == 200
     assert "Welcome to hintr" in res.content.decode("UTF-8")
 
