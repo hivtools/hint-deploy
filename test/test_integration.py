@@ -20,7 +20,7 @@ def test_start_hint():
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
     obj.start()
-    hint_deploy.loadbalancer_configure(obj, cfg)
+    hint_deploy.loadbalancer_configure(obj)
     time.sleep(5)  # Wait for loadbalancer to reload config
 
     res = requests.get("http://localhost:8080")
@@ -166,11 +166,15 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image hintr" in p
+    assert "Pulling docker image hintr_api" in p
     assert "Pulling docker image db-migrate" not in p
-    assert "Stopping previous hintr and workers" in p
+    assert "Stopping hint_hintr" in p
+    assert "Stopping hint_hintr_api_" in p
     assert "Starting hintr" in p
+    assert "Starting *service* hintr_api" in p
     assert "Starting *service* calibrate_worker" in p
     assert "Starting *service* worker" in p
+    assert "[hintr] Configuring loadbalancer" in p
 
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
@@ -182,13 +186,19 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
     assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
-    assert len(docker_util.containers_matching("hint_hintr_api_", True)) == 2
+    assert len(docker_util.containers_matching("hint_hintr_api_", True)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 4
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker", False)) == 1
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker", True)) == 2
+
+    # Can access hintr endpoints
+    time.sleep(5)  # Wait for loadbalancer to reload config
+    res = requests.get("http://localhost:8888")
+    assert res.status_code == 200
+    assert "Welcome to hintr" in res.content.decode("UTF-8")
 
     # We are going to write some data into redis here and later check
     # that it survived the upgrade.
@@ -209,6 +219,7 @@ def test_update_hintr_and_all():
     assert "Removing 'redis'" in p
     assert "Starting redis" in p
     assert "[redis] Waiting for redis to come up" in p
+    assert "[hintr] Configuring loadbalancer" in p
 
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
@@ -223,6 +234,12 @@ def test_update_hintr_and_all():
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 1
+
+    # Can access hintr endpoints
+    time.sleep(5)  # Wait for loadbalancer to reload config
+    res = requests.get("http://localhost:8888")
+    assert res.status_code == 200
+    assert "Welcome to hintr" in res.content.decode("UTF-8")
 
     redis = obj.containers.get("redis", obj.prefix)
     args_get = ["redis-cli", "GET", "data_persists"]

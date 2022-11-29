@@ -1,6 +1,5 @@
 import docker
 import math
-import re
 import requests
 import time
 
@@ -206,32 +205,45 @@ def hint_start(obj, cfg, args):
         pull = args["pull_images"]
         print("Adding test user '{}'".format(email))
         hint_user(cfg, "add-user", email, pull, "password")
-        loadbalancer_configure(obj, cfg)
+
+    loadbalancer_configure(obj)
 
 
 def hint_upgrade_hintr(obj):
-    hintr = obj.containers.find("hintr_api")
+    loadbalancer = obj.containers.find("hintr")
+    hintr_api = obj.containers.find("hintr_api")
     calibrate_worker = obj.containers.find("calibrate_worker")
     worker = obj.containers.find("worker")
-    container = hintr.get(obj.prefix)
+    hintr_containers = hintr_api.get(obj.prefix)
+    loadbalancer_container = loadbalancer.get(obj.prefix)
 
     # Always pull the docker image - and do this *before* we start
     # removing things to minimise downtime.
-    docker_util.image_pull(hintr.name, str(obj.data.hintr_ref))
-    docker_util.image_pull(hintr.name, str(obj.data.hintr_worker_ref))
+    docker_util.image_pull(loadbalancer.name, str(
+        obj.data.hintr_loadbalancer_ref))
+    docker_util.image_pull(hintr_api.name, str(obj.data.hintr_ref))
+    docker_util.image_pull(hintr_api.name, str(obj.data.hintr_worker_ref))
 
-    if container:
-        if container.status == "running":
-            print("Stopping previous hintr and workers")
-            container.exec_run(["hintr_stop"])
-        docker_util.container_remove_wait(container)
+    for container in hintr_containers:
+        if container:
+            if container.status == "running":
+                print("Stopping {}".format(container.name))
+                container.exec_run(["hintr_stop"])
+            docker_util.container_remove_wait(container)
+    print("Stopping {}".format(loadbalancer_container.name))
+    docker_util.container_stop(
+        loadbalancer_container, True, loadbalancer_container.name)
+    docker_util.container_remove_wait(loadbalancer_container)
 
-    obj.start(subset=[hintr.name, calibrate_worker.name, worker.name])
+    obj.start(subset=[loadbalancer.name, hintr_api.name,
+              calibrate_worker.name, worker.name])
+    loadbalancer_configure(obj)
 
 
 def hint_upgrade_all(obj, db_tag):
     pull_migrate_image(db_tag)
     obj.restart(pull_images=True)
+    loadbalancer_configure(obj)
 
 
 def pull_migrate_image(db_tag):
@@ -335,8 +347,9 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
-def loadbalancer_configure(constellation, cfg):
-    print("[hint] Configuring loadbalancer")
+def loadbalancer_configure(constellation):
+    print("[hintr] Configuring loadbalancer")
+    cfg = constellation.data
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
     api_instances = constellation.containers.get("hintr_api", cfg.prefix)
     args = []
