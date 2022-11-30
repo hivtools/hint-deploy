@@ -31,7 +31,7 @@ def test_start_hint():
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
     obj.start()
-    hint_deploy.loadbalancer_configure(obj)
+    hint_deploy.loadbalancer_register_hintr_api(obj)
 
     res = s.get("http://localhost:8080")
 

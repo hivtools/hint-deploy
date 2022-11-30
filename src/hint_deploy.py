@@ -207,7 +207,7 @@ def hint_start(obj, cfg, args):
         print("Adding test user '{}'".format(email))
         hint_user(cfg, "add-user", email, pull, "password")
 
-    loadbalancer_configure(obj)
+    loadbalancer_register_hintr_api(obj)
 
 
 def hint_upgrade_hintr(obj):
@@ -238,13 +238,13 @@ def hint_upgrade_hintr(obj):
 
     obj.start(subset=[loadbalancer.name, hintr_api.name,
               calibrate_worker.name, worker.name])
-    loadbalancer_configure(obj)
+    loadbalancer_register_hintr_api(obj)
 
 
 def hint_upgrade_all(obj, db_tag):
     pull_migrate_image(db_tag)
     obj.restart(pull_images=True)
-    loadbalancer_configure(obj)
+    loadbalancer_register_hintr_api(obj)
 
 
 def hint_stop(obj, args):
@@ -362,7 +362,7 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
-def loadbalancer_configure(constellation):
+def loadbalancer_register_hintr_api(constellation):
     print("[hintr] Configuring loadbalancer")
     cfg = constellation.data
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
