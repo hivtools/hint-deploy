@@ -257,7 +257,7 @@ def hint_stop(obj, args):
     docker_util.container_stop(
         loadbalancer_container, True, loadbalancer_container.name)
     docker_util.container_remove_wait(loadbalancer_container)
-    obj.stop(args)
+    obj.stop(**args)
 
 
 def pull_migrate_image(db_tag):

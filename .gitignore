@@ -5,3 +5,4 @@ constellation
 config/.last_deploy
 .idea
 config/other.yml
+.vscode

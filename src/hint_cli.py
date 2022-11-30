@@ -171,7 +171,7 @@ def main(argv=None):
         save_config(path, config_name, cfg)
     elif action == "stop":
         verify_data_loss(action, args, cfg)
-        hint_stop(obj)
+        hint_stop(obj, args)
         if args["remove_volumes"]:
             remove_config(path)
     else:
