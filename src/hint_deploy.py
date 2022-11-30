@@ -111,7 +111,7 @@ class HintConfig:
 
 
 def hint_constellation(cfg):
-    # 1. Redis
+    # Redis
     redis_ref = constellation.ImageReference("library", "redis",
                                              cfg.redis_tag)
     redis_mounts = [constellation.ConstellationMount("redis", "/data")]
@@ -120,14 +120,14 @@ def hint_constellation(cfg):
         "redis", redis_ref, mounts=redis_mounts, args=redis_args,
         configure=redis_configure)
 
-    # 2. The db
+    # The db
     db_ref = constellation.ImageReference(
         "mrcide", "hint-db", cfg.db_tag)
     db_mounts = [constellation.ConstellationMount("db", "/pgdata")]
     db = constellation.ConstellationContainer(
         "db", db_ref, mounts=db_mounts, configure=db_configure)
 
-    # 3. hintr
+    # hintr
     hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0",
                   "--results-dir=/results",
@@ -146,14 +146,14 @@ def hint_constellation(cfg):
         "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args,
         mounts=hintr_mounts, environment=hintr_env, labels=labels)
 
-    # 4. hintr load balancer
+    # hintr load balancer
     hintr_loadbalancer_ref = cfg.hintr_loadbalancer_ref
     hintr_loadbalancer_ports = [8888] if cfg.hint_expose else None
     load_balancer = constellation.ConstellationContainer(
         "hintr", hintr_loadbalancer_ref, ports=hintr_loadbalancer_ports,
         labels=labels)
 
-    # 5. hint
+    # hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
     hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
@@ -163,7 +163,7 @@ def hint_constellation(cfg):
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
         configure=hint_configure)
 
-    # 6. proxy
+    # proxy
     proxy_ref = constellation.ImageReference("mrcide", "hint-proxy", "latest")
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
@@ -174,14 +174,14 @@ def hint_constellation(cfg):
         "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
-    # 7. calibrate worker
+    # calibrate worker
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationService(
         "calibrate_worker", worker_ref, cfg.hintr_calibrate_workers,
         args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
 
-    # 9. hintr workers
+    # hintr workers
     worker = constellation.ConstellationService(
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
