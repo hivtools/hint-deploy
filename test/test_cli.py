@@ -91,7 +91,8 @@ def test_args_passed_to_start():
 
 
 def test_other_args_passed_to_start():
-    with mock.patch('src.hint_deploy.constellation.Constellation', autospec=True) as obj:
+    with mock.patch('src.hint_deploy.constellation.Constellation',
+                    autospec=True) as obj:
         instance = obj.return_value
         hint_cli.main(["status"])
         assert instance.status.called
