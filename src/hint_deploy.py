@@ -150,7 +150,8 @@ def hint_constellation(cfg):
     hintr_loadbalancer_ref = cfg.hintr_loadbalancer_ref
     hintr_loadbalancer_ports = [8888] if cfg.hint_expose else None
     load_balancer = constellation.ConstellationContainer(
-        "hintr", hintr_loadbalancer_ref, ports=hintr_loadbalancer_ports)
+        "hintr", hintr_loadbalancer_ref, ports=hintr_loadbalancer_ports,
+        labels=labels)
 
     # 5. hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
