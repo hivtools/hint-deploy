@@ -2,6 +2,7 @@ import io
 import pytest
 import string
 
+from constellation import Constellation
 from contextlib import redirect_stdout
 from unittest import mock
 
@@ -89,13 +90,11 @@ def test_args_passed_to_start():
     assert f.call_args[0][2] == {"pull_images": True}
 
 
-# This *should* work as far as I can see but I don't see how to make it.
 def test_other_args_passed_to_start():
-    pytest.skip("not working")
-    with mock.patch('constellation.Constellation') as obj:
+    with mock.patch('src.hint_deploy.constellation.Constellation', autospec=True) as obj:
+        instance = obj.return_value
         hint_cli.main(["status"])
-
-    assert obj.status.called
+        assert instance.status.called
 
 
 def test_verify_data_loss_silent_if_no_loss():
