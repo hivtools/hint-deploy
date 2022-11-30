@@ -373,9 +373,8 @@ def loadbalancer_configure(constellation):
     docker_util.exec_safely(
         loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
+
 # It can take a while for the container to come up
-
-
 def wait(f, message, timeout=30, poll=0.1):
     for i in range(math.ceil(timeout / poll)):
         try:
