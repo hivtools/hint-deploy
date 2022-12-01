@@ -1,6 +1,5 @@
 import docker
 import math
-import re
 import requests
 import time
 
@@ -32,7 +31,17 @@ class HintConfig:
             dat, ["hintr", "calibrate_workers"])
         self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
+        self.hintr_port = config.config_integer(
+            dat, ["hintr", "port"]
+        )
+        self.hintr_loadbalancer_tag = config.config_string(
+            dat, ["hintr-loadbalancer", "tag"], True, default_tag)
+        self.api_instances = config.config_integer(
+            dat, ["hintr-loadbalancer", "api_instances"])
 
+        self.hintr_loadbalancer_ref = constellation.ImageReference(
+            "mrcide", "hintr-loadbalancer", self.hintr_loadbalancer_tag
+        )
         self.hintr_ref = constellation.ImageReference(
             "mrcide", "hintr", self.hintr_tag)
         self.hintr_worker_ref = constellation.ImageReference(
@@ -102,7 +111,7 @@ class HintConfig:
 
 
 def hint_constellation(cfg):
-    # 1. Redis
+    # Redis
     redis_ref = constellation.ImageReference("library", "redis",
                                              cfg.redis_tag)
     redis_mounts = [constellation.ConstellationMount("redis", "/data")]
@@ -111,33 +120,40 @@ def hint_constellation(cfg):
         "redis", redis_ref, mounts=redis_mounts, args=redis_args,
         configure=redis_configure)
 
-    # 2. The db
+    # The db
     db_ref = constellation.ImageReference(
         "mrcide", "hint-db", cfg.db_tag)
     db_mounts = [constellation.ConstellationMount("db", "/pgdata")]
     db = constellation.ConstellationContainer(
         "db", db_ref, mounts=db_mounts, configure=db_configure)
 
-    # 3. hintr
+    # hintr
     hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0",
                   "--results-dir=/results",
-                  "--prerun-dir=/prerun"]
+                  "--prerun-dir=/prerun",
+                  "--port=" + str(cfg.hintr_port)]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
                     constellation.ConstellationMount("results", "/results"),
                     constellation.ConstellationMount("prerun", "/prerun")]
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
-    hintr_ports = [8888] if cfg.hint_expose else None
     # See https://www.elastic.co/guide/en/beats/filebeat/current/configuration-autodiscover-hints.html # noqa
     # for details of how labels are used by filebeat autodiscover
     labels = {"co.elastic.logs/json.add_error_key": "true"}
-    hintr = constellation.ConstellationContainer(
-        "hintr", hintr_ref, args=hintr_args, mounts=hintr_mounts,
-        ports=hintr_ports, environment=hintr_env, labels=labels)
+    hintr = constellation.ConstellationService(
+        "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args,
+        mounts=hintr_mounts, environment=hintr_env, labels=labels)
 
-    # 4. hint
+    # hintr load balancer
+    hintr_loadbalancer_ref = cfg.hintr_loadbalancer_ref
+    hintr_loadbalancer_ports = [8888] if cfg.hint_expose else None
+    load_balancer = constellation.ConstellationContainer(
+        "hintr", hintr_loadbalancer_ref, ports=hintr_loadbalancer_ports,
+        labels=labels)
+
+    # hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
     hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
@@ -147,7 +163,7 @@ def hint_constellation(cfg):
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
         configure=hint_configure)
 
-    # 5. proxy
+    # proxy
     proxy_ref = constellation.ImageReference("mrcide", "hint-proxy", "latest")
     proxy_ports = [cfg.proxy_port_http, cfg.proxy_port_https]
     proxy_args = ["hint:8080",
@@ -158,19 +174,20 @@ def hint_constellation(cfg):
         "proxy", proxy_ref, ports=proxy_ports, args=proxy_args,
         configure=proxy_configure)
 
-    # 6. calibrate worker
+    # calibrate worker
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationService(
         "calibrate_worker", worker_ref, cfg.hintr_calibrate_workers,
         args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
 
-    # 7. hintr workers
+    # hintr workers
     worker = constellation.ConstellationService(
         "worker", worker_ref, cfg.hintr_workers,
         mounts=hintr_mounts, environment=hintr_env)
 
-    containers = [db, redis, hintr, hint, proxy, calibrate_worker, worker]
+    containers = [db, redis, hintr, load_balancer,
+                  hint, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
                                       cfg.network, cfg.volumes,
@@ -190,30 +207,58 @@ def hint_start(obj, cfg, args):
         print("Adding test user '{}'".format(email))
         hint_user(cfg, "add-user", email, pull, "password")
 
+    loadbalancer_register_hintr_api(obj)
+
 
 def hint_upgrade_hintr(obj):
-    hintr = obj.containers.find("hintr")
+    loadbalancer = obj.containers.find("hintr")
+    hintr_api = obj.containers.find("hintr_api")
     calibrate_worker = obj.containers.find("calibrate_worker")
     worker = obj.containers.find("worker")
-    container = hintr.get(obj.prefix)
+    hintr_containers = hintr_api.get(obj.prefix)
+    loadbalancer_container = loadbalancer.get(obj.prefix)
 
     # Always pull the docker image - and do this *before* we start
     # removing things to minimise downtime.
-    docker_util.image_pull(hintr.name, str(obj.data.hintr_ref))
-    docker_util.image_pull(hintr.name, str(obj.data.hintr_worker_ref))
+    docker_util.image_pull(loadbalancer.name, str(
+        obj.data.hintr_loadbalancer_ref))
+    docker_util.image_pull(hintr_api.name, str(obj.data.hintr_ref))
+    docker_util.image_pull(hintr_api.name, str(obj.data.hintr_worker_ref))
 
-    if container:
-        if container.status == "running":
-            print("Stopping previous hintr and workers")
-            container.exec_run(["hintr_stop"])
-        docker_util.container_remove_wait(container)
+    for container in hintr_containers:
+        if container:
+            if container.status == "running":
+                print("Stopping {}".format(container.name))
+                container.exec_run(["hintr_stop"])
+            docker_util.container_remove_wait(container)
+    print("Killing {}".format(loadbalancer_container.name))
+    docker_util.container_stop(
+        loadbalancer_container, True, loadbalancer_container.name)
+    docker_util.container_remove_wait(loadbalancer_container)
 
-    obj.start(subset=[hintr.name, calibrate_worker.name, worker.name])
+    obj.start(subset=[loadbalancer.name, hintr_api.name,
+              calibrate_worker.name, worker.name])
+    loadbalancer_register_hintr_api(obj)
 
 
 def hint_upgrade_all(obj, db_tag):
     pull_migrate_image(db_tag)
     obj.restart(pull_images=True)
+    loadbalancer_register_hintr_api(obj)
+
+
+def hint_stop(obj, args):
+    # Loadbalancer can take >10s to stop if we stop it via
+    # docker stop making the ./hint stop error
+    # We don't rely on saving any data from the loadbalancer
+    # so we can just kill the loadbalancer
+    loadbalancer = obj.containers.find("hintr")
+    loadbalancer_container = loadbalancer.get(obj.prefix)
+    print("Killing {}".format(loadbalancer_container.name))
+    docker_util.container_stop(
+        loadbalancer_container, True, loadbalancer_container.name)
+    docker_util.container_remove_wait(loadbalancer_container)
+    obj.stop(**args)
 
 
 def pull_migrate_image(db_tag):
@@ -315,6 +360,18 @@ def proxy_configure(container, cfg):
         args = ["self-signed-certificate", "/run/proxy",
                 "GB", "London", "IC", "reside", cfg.proxy_host]
         docker_util.exec_safely(container, args)
+
+
+def loadbalancer_register_hintr_api(constellation):
+    print("[hintr] Configuring loadbalancer")
+    cfg = constellation.data
+    loadbalancer = constellation.containers.get("hintr", cfg.prefix)
+    api_instances = constellation.containers.get("hintr_api", cfg.prefix)
+    args = []
+    for instance in api_instances:
+        args += ["--address", instance.name]
+    docker_util.exec_safely(
+        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
 
 # It can take a while for the container to come up

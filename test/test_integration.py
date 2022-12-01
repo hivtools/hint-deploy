@@ -5,7 +5,9 @@ import os.path
 import pytest
 import requests
 import time
+import logging
 
+from requests.adapters import HTTPAdapter, Retry
 from contextlib import redirect_stdout
 from unittest import mock
 
@@ -14,19 +16,29 @@ import constellation.docker_util as docker_util
 
 from src import hint_cli, hint_deploy
 
+# Retry requests, the loadbalancer can take
+# a few seconds to update after being configured.
+# This will retry with an increasing backoff 0s, 2s, 4s, ...
+# see https://stackoverflow.com/a/35636367
+logging.basicConfig(level=logging.DEBUG)
+s = requests.Session()
+retries = Retry(total=10, backoff_factor=1, status_forcelist=[502, 503, 504])
+s.mount('http://', HTTPAdapter(max_retries=retries))
+
 
 def test_start_hint():
     cfg = hint_deploy.HintConfig("config")
     obj = hint_deploy.hint_constellation(cfg)
     obj.status()
     obj.start()
+    hint_deploy.loadbalancer_register_hintr_api(obj)
 
-    res = requests.get("http://localhost:8080")
+    res = s.get("http://localhost:8080")
 
     assert res.status_code == 200
     assert "Naomi" in res.content.decode("UTF-8")
 
-    res = requests.get("http://localhost:8888")
+    res = s.get("http://localhost:8888")
 
     assert res.status_code == 200
 
@@ -39,6 +51,7 @@ def test_start_hint():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 1
@@ -78,7 +91,7 @@ def test_start_hint():
              '"http://localhost:8888/hintr/worker/status"),' + \
              '"text", encoding="UTF-8"))'
     args = ["Rscript", "-e", script]
-    hintr = obj.containers.get("hintr", obj.prefix)
+    hintr = obj.containers.get("hintr_api", obj.prefix)[0]
     result = docker_util.exec_safely(hintr, args).output
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
@@ -95,6 +108,7 @@ def test_start_hint():
     assert not docker_util.container_exists("hint_redis")
     assert not docker_util.container_exists("hint_hintr")
     assert not docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
     assert len(docker_util.containers_matching("hint_worker_", False)) == 0
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 0
@@ -110,7 +124,7 @@ def test_start_hint_from_cli():
         f.write("proxy:\n host: localhost")
 
     hint_cli.main(["start", "other"])
-    res = requests.get("http://localhost:8080")
+    res = s.get("http://localhost:8080")
     assert res.status_code == 200
     assert "Naomi" in res.content.decode("UTF-8")
     assert os.path.exists("config/.last_deploy")
@@ -162,11 +176,15 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image hintr" in p
+    assert "Pulling docker image hintr_api" in p
     assert "Pulling docker image db-migrate" not in p
-    assert "Stopping previous hintr and workers" in p
+    assert "Killing hint_hintr" in p
+    assert "Stopping hint_hintr_api_" in p
     assert "Starting hintr" in p
+    assert "Starting *service* hintr_api" in p
     assert "Starting *service* calibrate_worker" in p
     assert "Starting *service* worker" in p
+    assert "[hintr] Configuring loadbalancer" in p
 
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
@@ -177,12 +195,19 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
+    assert len(docker_util.containers_matching("hint_hintr_api_", True)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching("hint_worker_", True)) == 4
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker", False)) == 1
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker", True)) == 2
+
+    # Can access hintr endpoints
+    res = s.get("http://localhost:8888")
+    assert res.status_code == 200
+    assert "Welcome to hintr" in res.content.decode("UTF-8")
 
     # We are going to write some data into redis here and later check
     # that it survived the upgrade.
@@ -203,6 +228,7 @@ def test_update_hintr_and_all():
     assert "Removing 'redis'" in p
     assert "Starting redis" in p
     assert "[redis] Waiting for redis to come up" in p
+    assert "[hintr] Configuring loadbalancer" in p
 
     assert docker_util.network_exists("hint_nw")
     assert docker_util.volume_exists("hint_db_data")
@@ -213,9 +239,15 @@ def test_update_hintr_and_all():
     assert docker_util.container_exists("hint_redis")
     assert docker_util.container_exists("hint_hintr")
     assert docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
     assert len(docker_util.containers_matching("hint_worker_", False)) == 2
     assert len(docker_util.containers_matching(
         "hint_calibrate_worker_", False)) == 1
+
+    # Can access hintr endpoints
+    res = s.get("http://localhost:8888")
+    assert res.status_code == 200
+    assert "Welcome to hintr" in res.content.decode("UTF-8")
 
     redis = obj.containers.get("redis", obj.prefix)
     args_get = ["redis-cli", "GET", "data_persists"]
@@ -247,3 +279,23 @@ def test_start_pulls_db_migrate():
     assert "Pulling docker image db-migrate" not in p
 
     obj.destroy()
+
+
+def test_stop_kills_loadbalancer():
+    hint_cli.main(["start"])
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_cli.main(["stop"])
+
+    p = f.getvalue()
+    assert "Killing hint_hintr" in p
+
+    assert not docker_util.container_exists("hint_hintr")
+    assert not docker_util.container_exists("hint_db")
+    assert not docker_util.container_exists("hint_redis")
+    assert not docker_util.container_exists("hint_hint")
+    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
+    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
+    assert len(docker_util.containers_matching(
+        "hint_calibrate_worker_", False)) == 0

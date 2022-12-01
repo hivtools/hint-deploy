@@ -13,8 +13,13 @@ hint:
     config: "hint_config"
   expose: true
 
+hintr-loadbalancer:
+  tag: "main"
+  api_instances: 1
+
 hintr:
   tag: "master"
+  port: 8888
   workers: 2
   calibrate_workers: 1
   volumes:
