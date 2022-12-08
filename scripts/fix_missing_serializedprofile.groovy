@@ -1,14 +1,8 @@
-// We have upgraded pac4j from v 3.3.0 to v 5.4.3 see
-// https://github.com/mrc-ide/hint/pull/731/files, the update includes changes
-// to the serialization format used for the profile. It previously used
-// java serialization but now uses JSON. Support for Java serialized profiles
-// has been removed meaning that when a user with an old format profile tries to
-// login they get an error.
-// We need to migrate the profile to use JSON serialization.
-// This script reads the profiles from the database, uses the
-// ProfleServiceSerializer from pac4j to decode the Java serialized profile
-// and recode as JSON. It then updates the column in the database to the JSON
-// serialized format.
+// Since switching to login via SSO when a new account is created
+// it does not set up a serializedprofile in the db for the new account
+// this then means that users cannot share projects with those new users
+// this script will create a serialized profile for each user where it
+// is empty and then save it to the database
 
 @GrabConfig(systemClassLoader=true)
 @Grab(group='org.postgresql', module='postgresql',  version='9.4-1205-jdbc42')
@@ -20,7 +14,7 @@ import org.pac4j.sql.profile.DbProfile
 import org.pac4j.core.util.serializer.ProfileServiceSerializer
 
 class Profile {
-    String id;
+    Object id;
     String serializedProfile;
     boolean updated = false;
 
@@ -30,14 +24,13 @@ class Profile {
     }
 
     void serialize(ProfileServiceSerializer serializer) {
-        println this.serializedProfile
-        if (length(this.serializedProfile) > 0) {
+        if (this.serializedProfile?.length() > 0) {
             println "Not updating as profile already serialized"
             return
         }
-        DbProfile profile = DbProfile()
-        profile.build(this.id, mapOf("username" to this.id))
-        this.serializedProfile = serializer.encode(decoded)
+        DbProfile profile = new DbProfile()
+        profile.build(this.id, ["username": this.id])
+        this.serializedProfile = serializer.encode(profile)
         println "Serialized profile"
         println this.serializedProfile
         this.updated = true;
@@ -59,8 +52,8 @@ try {
     def updateSql = "UPDATE users SET serializedprofile = ? where id = ?"
     con.withTransaction {
         profiles.each { profile ->
-            profile.serialize()
-            if (false) {
+            profile.serialize(serializer)
+            if (profile.updated) {
                 con.execute updateSql, [profile.serializedProfile, profile.id]
             }
         }
