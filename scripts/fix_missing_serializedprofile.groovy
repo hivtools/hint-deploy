@@ -24,6 +24,8 @@ class Profile {
     }
 
     void serialize(ProfileServiceSerializer serializer) {
+        println "Current serializedprofile is"
+        println this.serializedProfile
         if (this.serializedProfile?.length() > 0) {
             println "Not updating as profile already serialized"
             return
@@ -31,7 +33,7 @@ class Profile {
         DbProfile profile = new DbProfile()
         profile.build(this.id, ["username": this.id])
         this.serializedProfile = serializer.encode(profile)
-        println "Serialized profile"
+        println "Updated serialized profile is"
         println this.serializedProfile
         this.updated = true;
     }
