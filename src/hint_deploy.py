@@ -132,6 +132,7 @@ def hint_constellation(cfg):
     hintr_args = ["--workers=0",
                   "--results-dir=/results",
                   "--prerun-dir=/prerun",
+                  "--uploads-dir=/uploads",
                   "--port=" + str(cfg.hintr_port)]
     hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
                     constellation.ConstellationMount("results", "/results"),
