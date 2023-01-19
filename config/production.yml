@@ -6,6 +6,7 @@ hint:
   oauth2_client_secret: VAULT:secret/hint/oauth2/production:secret
   oauth2_client_url: VAULT:secret/hint/oauth2/production:url
   oauth2_client_audience: naomi
+  db_password: VAULT:secret/hint/postgres/credentials:password
   email:
     password: VAULT:secret/hint/email:password
 

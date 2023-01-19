@@ -71,6 +71,8 @@ class HintConfig:
         self.hint_oauth2_client_audience = config.config_string(
             dat, ["hint", "oauth2_client_audience"], True, "")
 
+        self.hint_db_password = config.config_string(dat, ["hint", "db_password"], True, ""),
+
         self.hint_email_mode = "real" if self.hint_email_password else "disk"
         self.hint_adr_url = config.config_string(
             dat, ["hint", "adr_url"], True)
@@ -327,7 +329,7 @@ def hint_configure(container, cfg):
         "upload_dir": "/uploads",
         "hintr_url": "http://hintr:8888",
         "db_url": "jdbc:postgresql://db/hint",
-        "db_password": "changeme",
+        "db_password": cfg.hint_db_password,
         "issue_report_url": cfg.hint_issue_report_url,
         "oauth2_client_id": cfg.hint_oauth2_client_id,
         "oauth2_client_secret": cfg.hint_oauth2_client_secret,
