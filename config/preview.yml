@@ -18,9 +18,9 @@ hint:
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
   oauth2_client_adr_url: http://hint_resource_server:5000 
   oauth2_login_method: true
-  oauth2_client_id: VAULT:secret/hint/oauth2/preview:id
-  oauth2_client_secret: VAULT:secret/hint/oauth2/preview:secret
-  oauth2_client_url: VAULT:secret/hint/oauth2/preview:url
+  oauth2_client_id: VAULT:secret/hint/oauth2/auth0:id
+  oauth2_client_secret: VAULT:secret/hint/oauth2/auth0:secret
+  oauth2_client_url: VAULT:secret/hint/oauth2/auth0:url
   oauth2_client_audience: naomi
   email:
     password: VAULT:secret/hint/email:password
