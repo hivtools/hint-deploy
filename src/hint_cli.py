@@ -33,7 +33,8 @@ from src.hint_deploy import \
     hint_start, \
     hint_upgrade_hintr, \
     hint_upgrade_all, \
-    hint_user
+    hint_user, \
+    hint_stop
 
 
 # Returned options are passed to constellation and override
@@ -168,9 +169,11 @@ def main(argv=None):
         verify_data_loss(action, args, cfg)
         hint_start(obj, cfg, args)
         save_config(path, config_name, cfg)
+    elif action == "stop":
+        verify_data_loss(action, args, cfg)
+        hint_stop(obj, args)
+        if args["remove_volumes"]:
+            remove_config(path)
     else:
         verify_data_loss(action, args, cfg)
         obj.__getattribute__(action)(**args)
-
-        if action == "stop" and args["remove_volumes"]:
-            remove_config(path)

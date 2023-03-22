@@ -33,6 +33,9 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Tests
+        env:
+          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
         run: |
           pytest --cov=src
 
@@ -41,4 +44,7 @@ jobs:
           pycodestyle .
 
       - name: Upload coverage to Codecov
+        env:
+          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
         uses: codecov/codecov-action@v1

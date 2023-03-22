@@ -1,12 +1,20 @@
 hint:
   adr_url: https://adr.unaids.org/
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
+  oauth2_login_method: true 
+  oauth2_client_id: VAULT:secret/hint/oauth2/production:id
+  oauth2_client_secret: VAULT:secret/hint/oauth2/production:secret
+  oauth2_client_url: VAULT:secret/hint/oauth2/production:url
+  oauth2_client_audience: naomi
   email:
     password: VAULT:secret/hint/email:password
 
+hintr-loadbalancer:
+  api_instances: 3
+
 hintr:
   workers: 5
-  calibrate_workers: 2 
+  calibrate_workers: 2
 
 proxy:
   host: naomi.unaids.org
@@ -19,8 +27,10 @@ proxy:
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
   auth:
-    method: github
-
+    method: approle
+    args:
+      role_id: $VAULT_AUTH_ROLE_ID
+      secret_id: $VAULT_AUTH_SECRET_ID
 users:
   add_test_user: false
 

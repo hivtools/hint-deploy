@@ -15,9 +15,10 @@ vault:
       secret_id: $VAULT_AUTH_SECRET_ID
 
 hint:
+  oauth2_login_method: true
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
-  oauth2_client_id: VAULT:secret/hint/oauth2/auth0:id
-  oauth2_client_secret: VAULT:secret/hint/oauth2/auth0:secret
-  oauth2_client_url: VAULT:secret/hint/oauth2/auth0:url
+  oauth2_client_id: VAULT:secret/hint/oauth2/development:id
+  oauth2_client_secret: VAULT:secret/hint/oauth2/development:secret
+  oauth2_client_url: VAULT:secret/hint/oauth2/development:url
   email:
     password: VAULT:secret/hint/email:password

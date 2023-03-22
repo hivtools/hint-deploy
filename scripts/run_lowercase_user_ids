@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -ex
+
+docker run --rm -v "$PWD":/home/groovy/scripts --network=hint_nw -w /home/groovy/scripts groovy:4.0.4-jdk11-alpine groovy lowercase_user_ids.groovy

@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+## Backup to a remote server volumes of data used by Naomi, namely:
+## db data, redis data, uploaded files, prerun files and results
+set -euE
+
+USAGE="Backup naomi volumes and keys to a remote server
+Usage: $(basename "$0") [-h] <target>
+Options:
+    -h     Show this help text
+Args:
+    target Remote location and path to write backup to in the form [user@]host:[path]"
+
+if [[ -z "$@" ]]; then
+    echo "$USAGE"
+    exit 1
+fi
+OPTIONS=$(getopt -o h -- "$@")
+
+eval set -- "$OPTIONS"
+while true; do
+    case "$1" in
+    -h)
+        echo "$USAGE"
+        exit 0
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+done
+
+TARGET=$1
+IFS=':' read -ra PARTS <<<"$TARGET"
+if [ ${#PARTS[@]} -ne 2 ]; then
+    echo "Target must be in form [user@]host:[path]"
+    exit 1
+fi
+SERVER=${PARTS[0]}
+BACKUP_DIR=${PARTS[1]}
+
+## Verify that we can ssh onto server
+RESULT=0
+ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 $SERVER 'exit 0' || RESULT=$?
+if [ $RESULT -ne 0 ]; then
+    echo "Cannot ssh onto server $SERVER check you have access"
+    exit 1
+fi
+
+if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
+    echo "Path $BACKUP_DIR does not exist on $SERVER"
+    exit 1
+fi
+
+NOW=$(date +'%Y%d%m-%H%M%S')
+BACKUP_DIR="$BACKUP_DIR/${HOSTNAME}/${NOW}"
+ssh $SERVER "mkdir -p $BACKUP_DIR"
+
+clean_up() {
+    local lineno=$1
+    local msg=$2
+    echo "Backup failed at $lineno: $msg"
+    exit 1
+}
+trap 'clean_up ${LINENO} "$BASH_COMMAND"' ERR
+
+VAULT_PATH="secret/hint/$HOSTNAME/cipher"
+VAULT_ADDR="https://vault.dide.ic.ac.uk:8200"
+echo "Do you want to backup private & public keys to secure ADR keys to vault?"
+echo "!!This will overwrite any existing entry at '$VAULT_PATH' in vault!!"
+echo "You do not need to do this if you plan to restore to the same server, but if you want to load the backup onto"
+echo "another server and have the user entered ADR keys still work then you need backup these keys"
+read -p "Backup keys? y/n" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    vault login -address=$VAULT_ADDR -method=github
+    PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
+    PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
+    echo "Writing private and public keys to $VAULT_PATH"
+    vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
+    echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_DIR/cipher_path"
+fi
+
+echo "Building backup container"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+IMAGE_TAG=mrcide/hint-backup:latest
+docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
+
+echo "*** Backing up postgres data"
+docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_DIR/db_dump.sql"
+
+echo "*** Backing up redis data"
+docker run --rm \
+    --volumes-from hint_redis \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/redis
+
+echo "*** Backing up prerun data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/prerun
+
+echo "*** Backing up results data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /results/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/results
+
+echo "*** Backing up uploads data"
+docker run --rm \
+    --volumes-from hint_hintr \
+    -v $HOME/.ssh:/ssh \
+    -e SERVER=$SERVER \
+    -e BACKUP_DIR=$BACKUP_DIR \
+    $IMAGE_TAG \
+    rsync -a --info=progress2 /uploads/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/uploads
+
+echo "Backup complete at $SERVER:$BACKUP_DIR"
