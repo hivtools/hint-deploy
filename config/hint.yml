@@ -24,7 +24,6 @@ hintr:
   calibrate_workers: 1
   volumes:
     results: "hint_results"
-    prerun: "hint_prerun"
   use_mock_model: false
 
 proxy:

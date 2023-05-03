@@ -3,7 +3,8 @@
 ## Restore from a backup
 set -eE
 
-volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
+volumes=("hint_db_data" "hint_redis_data" "hint_results" "hint_uploads"
+"hint_config")
 
 clean_up() {
     echo "Restore failed, cleaning up working dir"
@@ -36,7 +37,7 @@ assert_file_exists() {
 
 assert_all_data_exists() {
     if !([ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/db_dump.sql" ] && [ -f "$1/redis_backup.tar" ] &&
-        [ -f "$1/prerun_backup.tar" ] && [ -f "$1/results_backup.tar" ] && [ -f "$1/uploads_backup.tar" ]); then
+        [ -f "$1/results_backup.tar" ] && [ -f "$1/uploads_backup.tar" ]); then
         echo "Backup archive $1 is incomplete"
         echo "Usage: restore <backup_file>"
         exit 1
@@ -90,7 +91,6 @@ restore() {
     docker exec -i restore_pg psql -U postgres postgres <$1/db_dump.sql >/dev/null
     docker stop restore_pg
     docker run --rm -v hint_redis_data:/data -v $1:/backup busybox tar -xf /backup/redis_backup.tar -C /data
-    docker run --rm -v hint_prerun:/data -v $1:/backup busybox tar -xf /backup/prerun_backup.tar -C /data
     docker run --rm -v hint_results:/data -v $1:/backup busybox tar -xf /backup/results_backup.tar -C /data
     docker run --rm -v hint_uploads:/data -v $1:/backup busybox tar -xf /backup/uploads_backup.tar -C /data
 }
