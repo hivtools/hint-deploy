@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## Backup to a remote server volumes of data used by Naomi, namely:
-## db data, redis data, uploaded files, prerun files and results
+## db data, redis data, uploaded files and results
 set -euE
 
 USAGE="Backup naomi volumes and keys to a remote server
@@ -98,15 +98,6 @@ docker run --rm \
     -e BACKUP_DIR=$BACKUP_DIR \
     $IMAGE_TAG \
     rsync -a --info=progress2 /data/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/redis
-
-echo "*** Backing up prerun data"
-docker run --rm \
-    --volumes-from hint_hintr \
-    -v $HOME/.ssh:/ssh \
-    -e SERVER=$SERVER \
-    -e BACKUP_DIR=$BACKUP_DIR \
-    $IMAGE_TAG \
-    rsync -a --info=progress2 /prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" $SERVER:$BACKUP_DIR/prerun
 
 echo "*** Backing up results data"
 docker run --rm \

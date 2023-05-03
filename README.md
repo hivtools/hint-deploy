@@ -49,10 +49,8 @@ To get them run
 
 ```
 vault login -method=github
-vault read auth/approle/role/hint-deploy/role-id
-export VAULT_AUTH_ROLE_ID=role-id
-vault write -f auth/approle/role/hint-deploy/secret-id
-export VAULT_AUTH_SECRET_ID=secret-id
+VAULT_AUTH_ROLE_ID=$(vault read -field=role_id auth/approle/role/hint-deploy/role-id)
+VAULT_AUTH_SECRET_ID=$(vault write --field=secret_id -f auth/approle/role/hint-deploy/secret-id)
 ```
 ensure they are available as env vars wherever you run pytest from. These are available to the CI as repo secrets.
 

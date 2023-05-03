@@ -52,7 +52,7 @@ if ! $(ssh $SERVER "[ -d $BACKUP_DIR ]"); then
     exit 1
 fi
 
-volumes=("hint_db_data" "hint_redis_data" "hint_prerun" "hint_results" "hint_uploads" "hint_config")
+volumes=("hint_db_data" "hint_redis_data" "hint_results" "hint_uploads" "hint_config")
 
 clean_up() {
     echo "Restore failed, cleaning up working dir"
@@ -75,7 +75,7 @@ array_contains() {
 
 assert_all_data_exists() {
     if !([ ! -z "$1" ] && [ -d "$1" ] && [ -f "$1/db_dump.sql" ] && [ -d "$1/redis" ] &&
-        [ -d "$1/prerun" ] && [ -d "$1/results" ] && [ -d "$1/uploads" ]); then
+        [ -d "$1/results" ] && [ -d "$1/uploads" ]); then
         echo "Backup archive $1 is incomplete"
         echo "Usage: restore <backup_file>"
         exit 1
@@ -140,13 +140,6 @@ restore() {
         -v $HOME/.ssh:/ssh \
         $IMAGE_TAG \
         rsync -a --info=progress2 $SERVER:$BACKUP_DIR/redis/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
-
-    echo "Restoring prerun data"
-    docker run --rm \
-        -v hint_prerun:/data \
-        -v $HOME/.ssh:/ssh \
-        $IMAGE_TAG \
-        rsync -a --info=progress2 $SERVER:$BACKUP_DIR/prerun/ -e "ssh -o StrictHostKeyChecking=accept-new -i /ssh/id_rsa" /data
 
     echo "Restoring results data"
     docker run --rm \

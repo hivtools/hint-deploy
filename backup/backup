@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## Backup all volumes of data used by Naomi, namely:
-## db data, redis data, uploaded files, prerun files and results
+## db data, redis data, uploaded files and results
 set -eE
 
 SCRIPT_DIR="$(
@@ -38,7 +38,6 @@ fi
 
 docker exec hint_db pg_dumpall -U postgres >$BACKUP_WORKING_DIR/db_dump.sql
 docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/redis_backup.tar -C /data .
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/prerun_backup.tar -C /prerun .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/results_backup.tar -C /results .
 docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
 find $BACKUP_WORKING_DIR -type f \( -not -name "checklist.chk" \) -exec md5sum "{}" + >$BACKUP_WORKING_DIR/checklist.chk
