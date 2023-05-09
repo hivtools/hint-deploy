@@ -20,6 +20,7 @@ hint:
   oauth2_client_id: VAULT:secret/hint/oauth2/preview:id
   oauth2_client_secret: VAULT:secret/hint/oauth2/preview:secret
   oauth2_client_url: VAULT:secret/hint/oauth2/preview:url
-  oauth2_client_audience: naomi
+  oauth2_client_audience: VAULT:secret/hint/oauth2/preview:audience
+  oauth2_client_adr_server_url: VAULT:secret/hint/oauth2/preview:adr_server_url
   email:
     password: VAULT:secret/hint/email:password
