@@ -22,5 +22,6 @@ hint:
   oauth2_client_url: VAULT:secret/hint/oauth2/preview:url
   oauth2_client_audience: VAULT:secret/hint/oauth2/preview:audience
   oauth2_client_adr_server_url: VAULT:secret/hint/oauth2/preview:adr_server_url
+  oauth2_client_scope: VAULT:secret/hint/oauth2/preview:scope
   email:
     password: VAULT:secret/hint/email:password
