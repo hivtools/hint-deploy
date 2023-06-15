@@ -5,7 +5,9 @@ hint:
   oauth2_client_id: VAULT:secret/hint/oauth2/production:id
   oauth2_client_secret: VAULT:secret/hint/oauth2/production:secret
   oauth2_client_url: VAULT:secret/hint/oauth2/production:url
-  oauth2_client_audience: naomi
+  oauth2_client_audience: VAULT:secret/hint/oauth2/production:audience
+  oauth2_client_adr_server_url: VAULT:secret/hint/oauth2/production:adr_server_url
+  oauth2_client_scope: VAULT:secret/hint/oauth2/production:scope
   email:
     password: VAULT:secret/hint/email:password
 
