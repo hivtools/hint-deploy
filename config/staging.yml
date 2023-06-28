@@ -15,10 +15,14 @@ vault:
       secret_id: $VAULT_AUTH_SECRET_ID
 
 hint:
+  adr_url: https://dev.adr.fjelltopp.org/
   oauth2_login_method: true
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
   oauth2_client_id: VAULT:secret/hint/oauth2/development:id
   oauth2_client_secret: VAULT:secret/hint/oauth2/development:secret
   oauth2_client_url: VAULT:secret/hint/oauth2/development:url
+  oauth2_client_adr_server_url: VAULT:secret/hint/oauth2/development:adr_server_url
+  oauth2_client_scope: VAULT:secret/hint/oauth2/development:scope
+  oauth2_client_audience: VAULT:secret/hint/oauth2/development:audience
   email:
     password: VAULT:secret/hint/email:password
