@@ -12,11 +12,11 @@ hint:
     password: VAULT:secret/hint/email:password
 
 hintr-loadbalancer:
-  api_instances: 2
+  api_instances: 3
 
 hintr:
-  workers: 4
-  calibrate_workers: 1
+  workers: 5
+  calibrate_workers: 2
 
 proxy:
   host: naomi.unaids.org
