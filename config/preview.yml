@@ -15,6 +15,7 @@ vault:
       secret_id: $VAULT_AUTH_SECRET_ID
 
 hint:
+  tag: hintpproofofconcept
   issue_report_url: VAULT:secret/hint/flow-webhooks/issue-report:url
   oauth2_login_method: true
   oauth2_client_id: VAULT:secret/hint/oauth2/preview:id
@@ -25,3 +26,11 @@ hint:
   oauth2_client_scope: VAULT:secret/hint/oauth2/preview:scope
   email:
     password: VAULT:secret/hint/email:password
+
+hintr-loadbalancer:
+  api_instances: 2
+
+hintr:
+  workers: 2
+  calibrate_workers: 1
+
