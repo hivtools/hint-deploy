@@ -21,7 +21,7 @@ redis:
     - "redis"
 
 db:
-  tag: master
+  tag: "master"
   volumes:
     - "db"
 

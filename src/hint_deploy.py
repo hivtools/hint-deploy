@@ -182,7 +182,7 @@ def hint_constellation(cfg):
                   hint, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
-                                      cfg.network, [v["name"] for v in cfg.volumes.values()],
+                                      cfg.network, {k: v["name"] for (k, v) in cfg.volumes.items()},
                                       data=cfg, vault_config=cfg.vault)
 
     return obj
