@@ -12,6 +12,7 @@ class HintConfig:
     def __init__(self, path, config_name=None, options=None):
         dat = config.read_yaml("{}/hint.yml".format(path))
         dat = config.config_build(path, dat, config_name, options=options)
+        self.dat = dat
         self.network = config.config_string(dat, ["docker", "network"])
         self.prefix = config.config_string(dat, ["docker", "prefix"])
         default_tag = config.config_string(dat, ["docker", "default_tag"],
@@ -26,6 +27,7 @@ class HintConfig:
                                                  True, False)
         self.hintr_tag = config.config_string(dat, ["hintr", "tag"],
                                               True, default_tag)
+        self.volumes = config.config_dict(dat, ["volumes"])
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
         self.hintr_calibrate_workers = config.config_integer(
             dat, ["hintr", "calibrate_workers"])
@@ -91,18 +93,6 @@ class HintConfig:
             dat, ["proxy", "ssl", "certificate"], True)
         self.proxy_ssl_key = config.config_string(
             dat, ["proxy", "ssl", "key"], True)
-        self.volumes = {
-            "db": config.config_string(
-                dat, ["db", "volume"]),
-            "redis": config.config_string(
-                dat, ["redis", "volume"]),
-            "uploads": config.config_string(
-                dat, ["hint", "volumes", "uploads"]),
-            "config": config.config_string(
-                dat, ["hint", "volumes", "config"]),
-            "results": config.config_string(
-                dat, ["hintr", "volumes", "results"])
-        }
         self.vault = config.config_vault(dat, ["vault"])
         self.add_test_user = config.config_boolean(
             dat, ["users", "add_test_user"], True, False)
@@ -110,12 +100,16 @@ class HintConfig:
         self.protect_data = config.config_boolean(
             dat, ["deploy", "protect_data"], True, False)
 
+    def get_constellation_mounts(self, mount_ref):
+        return [constellation.ConstellationMount(key, self.volumes[key]["path"])
+                for key in config.config_list(self.dat, [mount_ref, "volumes"])]
+
 
 def hint_constellation(cfg):
     # Redis
     redis_ref = constellation.ImageReference("library", "redis",
                                              cfg.redis_tag)
-    redis_mounts = [constellation.ConstellationMount("redis", "/data")]
+    redis_mounts = cfg.get_constellation_mounts("redis")
     redis_args = ["--appendonly", "yes"]
     redis = constellation.ConstellationContainer(
         "redis", redis_ref, mounts=redis_mounts, args=redis_args,
@@ -124,18 +118,17 @@ def hint_constellation(cfg):
     # The db
     db_ref = constellation.ImageReference(
         "mrcide", "hint-db", cfg.db_tag)
-    db_mounts = [constellation.ConstellationMount("db", "/pgdata")]
+    db_mounts = cfg.get_constellation_mounts("db")
     db = constellation.ConstellationContainer(
         "db", db_ref, mounts=db_mounts, configure=db_configure)
 
     # hintr
     hintr_ref = cfg.hintr_ref
     hintr_args = ["--workers=0",
-                  "--results-dir=/results",
-                  "--inputs-dir=/uploads",
+                  "--results-dir=" + cfg.volumes["results"]["path"],
+                  "--inputs-dir=" + cfg.volumes["uploads"]["path"],
                   "--port=" + str(cfg.hintr_port)]
-    hintr_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
-                    constellation.ConstellationMount("results", "/results")]
+    hintr_mounts = cfg.get_constellation_mounts("hintr")
     hintr_env = {"REDIS_URL": "redis://{}:6379".format(redis.name)}
     if cfg.hintr_use_mock_model:
         hintr_env["USE_MOCK_MODEL"] = "true"
@@ -156,8 +149,7 @@ def hint_constellation(cfg):
     # hint
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
-    hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
-                   constellation.ConstellationMount("config", "/etc/hint")]
+    hint_mounts = cfg.get_constellation_mounts("hint")
     hint_ports = [8080] if cfg.hint_expose else None
     hint = constellation.ConstellationContainer(
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
@@ -190,7 +182,7 @@ def hint_constellation(cfg):
                   hint, proxy, calibrate_worker, worker]
 
     obj = constellation.Constellation("hint", cfg.prefix, containers,
-                                      cfg.network, cfg.volumes,
+                                      cfg.network, [v["name"] for v in cfg.volumes.values()],
                                       data=cfg, vault_config=cfg.vault)
 
     return obj
@@ -283,7 +275,7 @@ def hint_user(cfg, action, email, pull, password=None):
 
 def hint_user_run(ref, args, cfg):
     client = docker.client.from_env()
-    mounts = [docker.types.Mount("/etc/hint", cfg.volumes["config"],
+    mounts = [docker.types.Mount(cfg.volumes["config"]["path"], cfg.volumes["config"]["name"],
                                  read_only=True)]
     res = client.containers.run(str(ref), args, network=cfg.network,
                                 mounts=mounts, remove=True, detach=False)
@@ -312,7 +304,7 @@ def db_configure(container, cfg):
 
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
-    docker_util.exec_safely(container, ["mkdir", "-p", "/etc/hint/token_key"])
+    docker_util.exec_safely(container, ["mkdir", "-p", cfg.volumes["config"]["path"] + "/token_key"])
     config = {
         "application_url": cfg.proxy_url,
         # drop (start)
@@ -323,7 +315,7 @@ def hint_configure(container, cfg):
         # drop (end)
         "email_mode": cfg.hint_email_mode,
         "email_password": cfg.hint_email_password,
-        "upload_dir": "/uploads",
+        "upload_dir": cfg.volumes["uploads"]["path"],
         "hintr_url": "http://hintr:8888",
         "db_url": "jdbc:postgresql://db/hint",
         "db_password": "changeme",
@@ -342,7 +334,7 @@ def hint_configure(container, cfg):
 
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
-                                      "/etc/hint/config.properties")
+                                      cfg.volumes["config"]["path"] + "/config.properties")
     print("[hint] Waiting for hint to become responsive")
     wait(lambda: requests.get("http://localhost:8080").status_code == 200,
          "Hint did not become responsive in time")
