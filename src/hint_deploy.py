@@ -376,7 +376,7 @@ def loadbalancer_register_hintr_api(constellation):
         print(instance.name)
         args += ["--address", instance.name]
 
-    time.sleep(20)
+    time.sleep(5)
     print(docker_util.exec_safely(
         loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args))
     # docker_util.exec_safely(
