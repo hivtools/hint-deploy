@@ -101,8 +101,9 @@ class HintConfig:
             dat, ["deploy", "protect_data"], True, False)
 
     def get_constellation_mounts(self, mount_ref):
+        print(config.config_string(self.dat, [mount_ref, "volumes"]))
         return [constellation.ConstellationMount(key, self.volumes[key]["path"])
-                for key in config.config_list(self.dat, [mount_ref, "volumes"])]
+                for key in config.config_string(self.dat, [mount_ref, "volumes"])]
 
 
 def hint_constellation(cfg):
