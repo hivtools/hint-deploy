@@ -382,13 +382,17 @@ def loadbalancer_register_hintr_api(constellation):
             (exit_code, result) = docker_util.exec_safely(
                 loadbalancer, ["curl", "http://localhost:" + str(cfg.hintr_port)]
             )
+            if i > 10:
+                break
+            i += 1
             print(result)
         except Exception as e:
             print(e)
             if i > 10:
                 break
             i += 1
-
+    if (result != '{"status":"success","errors":null,"data":"Welcome to hintr"}'):
+        raise Exception(result)
     print(docker_util.exec_safely(
         loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args))
     # docker_util.exec_safely(
