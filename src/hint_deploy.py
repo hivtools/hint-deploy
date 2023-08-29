@@ -369,11 +369,16 @@ def loadbalancer_register_hintr_api(constellation):
     cfg = constellation.data
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
     api_instances = constellation.containers.get("hintr_api", cfg.prefix)
+    print(constellation.data)
+    print(loadbalancer.name)
     args = []
     for instance in api_instances:
+        print(instance.name)
         args += ["--address", instance.name]
-    docker_util.exec_safely(
-        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+    print(docker_util.exec_safely(
+        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args))
+    # docker_util.exec_safely(
+    #     loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
 
 # It can take a while for the container to come up
