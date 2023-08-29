@@ -380,7 +380,7 @@ def loadbalancer_register_hintr_api(constellation):
     print(docker_util.exec_safely(
         loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args))
     # docker_util.exec_safely(
-    #     loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+    # loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
 
 # It can take a while for the container to come up
