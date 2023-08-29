@@ -157,7 +157,8 @@ def hint_constellation(cfg):
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
     hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
-                   constellation.ConstellationMount("config", "/etc/hint")]
+                   constellation.ConstellationMount("config", "/etc/hint"),
+                   constellation.ConstellationMount("results", "/results")]
     hint_ports = [8080] if cfg.hint_expose else None
     hint = constellation.ConstellationContainer(
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
