@@ -170,7 +170,11 @@ def test_update_hintr_and_all():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        hint_cli.main(["upgrade", "hintr"])
+        try:
+            hint_cli.main(["upgrade", "hintr"])
+        except Exception as e:
+            print(f.getvalue())
+            raise
 
     p = f.getvalue()
     assert "Pulling docker image hintr" in p
