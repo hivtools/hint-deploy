@@ -153,7 +153,7 @@ def test_configure_proxy():
     args = ["self-signed-certificate", "/tmp",
             "GB", "London", "IC", "reside", cfg.proxy_host]
     docker_util.exec_safely(container, args)
-    cert = docker_util.string_from_container(container, "/tmp/certificate.pem" )
+    cert = docker_util.string_from_container(container, "/tmp/certificate.pem")
     key = docker_util.string_from_container(container, "/tmp/key.pem")
     cfg.proxy_ssl_certificate = cert
     cfg.proxy_ssl_key = key
