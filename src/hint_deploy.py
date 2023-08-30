@@ -378,7 +378,7 @@ def check_hintr_online(loadbalancer, port, name):
             )
         except Exception as e:
             print(e)
-            time.sleep(0.5)
+            time.sleep(1)
         i += 1
     return result == success_message
 
