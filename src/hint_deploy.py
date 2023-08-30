@@ -157,7 +157,8 @@ def hint_constellation(cfg):
     hint_ref = constellation.ImageReference("mrcide", "hint",
                                             cfg.hint_tag)
     hint_mounts = [constellation.ConstellationMount("uploads", "/uploads"),
-                   constellation.ConstellationMount("config", "/etc/hint")]
+                   constellation.ConstellationMount("config", "/etc/hint"),
+                   constellation.ConstellationMount("results", "/results")]
     hint_ports = [8080] if cfg.hint_expose else None
     hint = constellation.ConstellationContainer(
         "hint", hint_ref, mounts=hint_mounts, ports=hint_ports,
@@ -363,16 +364,29 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
+def ensure_hintr_online(loadbalancer, port, name, attempts=30):
+    for i in range(attempts):
+        code, output = loadbalancer.exec_run(["curl", "-s", name + ":" + port])
+        if code == 0:
+            return
+        print(f"hintr {name} not yet ready: {output.decode('UTF-8')}")
+        time.sleep(1)
+    raise Exception(f"hintr worker {name} did not come up in time")
+
+
 def loadbalancer_register_hintr_api(constellation):
     print("[hintr] Configuring loadbalancer")
     cfg = constellation.data
+    port = str(cfg.hintr_port)
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
     api_instances = constellation.containers.get("hintr_api", cfg.prefix)
     args = []
     for instance in api_instances:
+        ensure_hintr_online(loadbalancer, port, instance.name)
         args += ["--address", instance.name]
+
     docker_util.exec_safely(
-        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+        loadbalancer, ["configure_backend", "-p", port] + args)
 
 
 # It can take a while for the container to come up

@@ -1,3 +1,4 @@
+import pytest
 from src import hint_cli, hint_deploy
 
 
@@ -53,3 +54,19 @@ def test_load_config_sets_branch_refs():
     cfg = hint_deploy.HintConfig(path, config, options=options)
     assert cfg.hint_tag == "mrc-123"
     assert cfg.hintr_tag == "mrc-456"
+
+
+def test_ensure_online_raises_exception_if_no_hintr():
+    cfg = hint_deploy.HintConfig("config")
+    obj = hint_deploy.hint_constellation(cfg)
+    obj.status()
+    obj.start()
+    port = str(cfg.hintr_port)
+    loadbalancer = obj.containers.get("hintr", cfg.prefix)
+    api_instances = obj.containers.get("hintr_api", cfg.prefix)
+    name = api_instances[0].name
+    api_instances[0].stop()
+    with pytest.raises(Exception,
+                       match=f"hintr worker {name} did not come up in time"):
+        hint_deploy.ensure_hintr_online(loadbalancer, port, name, 1)
+    obj.destroy()
