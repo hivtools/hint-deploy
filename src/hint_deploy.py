@@ -375,12 +375,19 @@ def loadbalancer_register_hintr_api(constellation):
 
     result = ""
     i = 0
-    while result != b'{"status":"success","errors":null,"data":"Welcome to hintr"}' and i < 10:
+    while (result != b'{"status":"success",'
+                     b'"errors":null,'
+                     b'"data":"Welcome to hintr"}' and i < 10):
         try:
             (_, result) = docker_util.exec_safely(
-                loadbalancer, ["curl", "-s", api_instances[0].name + ":" + str(cfg.hintr_port)]
+                loadbalancer,
+                [
+                    "curl", "-s",
+                    api_instances[0].name + ":" + str(cfg.hintr_port)
+                ]
             )
-        except:
+        except Exception as e:
+            print(e)
             time.sleep(0.5)
         i += 1
     docker_util.exec_safely(
