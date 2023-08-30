@@ -364,34 +364,40 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
-def loadbalancer_register_hintr_api(constellation):
-    print("[hintr] Configuring loadbalancer")
-    cfg = constellation.data
-    loadbalancer = constellation.containers.get("hintr", cfg.prefix)
-    api_instances = constellation.containers.get("hintr_api", cfg.prefix)
-    args = []
-    for instance in api_instances:
-        args += ["--address", instance.name]
-
+def check_hintr_online(loadbalancer, port, name):
     result = ""
     i = 0
-    while (result != b'{"status":"success",'
-                     b'"errors":null,'
-                     b'"data":"Welcome to hintr"}' and i < 10):
+    success_message = (b'{"status":"success",'
+                       b'"errors":null,'
+                       b'"data":"Welcome to hintr"}')
+    while result != success_message and i < 10:
         try:
             (_, result) = docker_util.exec_safely(
                 loadbalancer,
-                [
-                    "curl", "-s",
-                    api_instances[0].name + ":" + str(cfg.hintr_port)
-                ]
+                ["curl", "-s", name + ":" + port]
             )
         except Exception as e:
             print(e)
             time.sleep(0.5)
         i += 1
+    return result == success_message
+
+
+def loadbalancer_register_hintr_api(constellation):
+    print("[hintr] Configuring loadbalancer")
+    cfg = constellation.data
+    port = str(cfg.hintr_port)
+    loadbalancer = constellation.containers.get("hintr", cfg.prefix)
+    api_instances = constellation.containers.get("hintr_api", cfg.prefix)
+    args = []
+    for instance in api_instances:
+        args += ["--address", instance.name]
+        is_online = check_hintr_online(loadbalancer, port, instance.name)
+        if not is_online:
+            raise Exception("{} did not come online".format(instance.name))
+
     docker_util.exec_safely(
-        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+        loadbalancer, ["configure_backend", "-p", port] + args)
 
 
 # It can take a while for the container to come up
