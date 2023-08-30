@@ -375,7 +375,7 @@ def loadbalancer_register_hintr_api(constellation):
 
     result = ""
     i = 0
-    while result != '{"status":"success","errors":null,"data":"Welcome to hintr"}' and i < 10:
+    while result != b'{"status":"success","errors":null,"data":"Welcome to hintr"}' and i < 10:
         try:
             (_, result) = docker_util.exec_safely(
                 loadbalancer, ["curl", "-s", api_instances[0].name + ":" + str(cfg.hintr_port)]
