@@ -1,6 +1,4 @@
-import constellation.docker_util as docker_util
 import pytest
-
 from src import hint_cli, hint_deploy
 
 
