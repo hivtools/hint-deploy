@@ -369,7 +369,6 @@ def loadbalancer_register_hintr_api(constellation):
     cfg = constellation.data
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
     api_instances = constellation.containers.get("hintr_api", cfg.prefix)
-
     args = []
     for instance in api_instances:
         print(instance.name)
@@ -377,26 +376,17 @@ def loadbalancer_register_hintr_api(constellation):
 
     result = ""
     i = 0
-    while result != '{"status":"success","errors":null,"data":"Welcome to hintr"}':
+    while result != '{"status":"success","errors":null,"data":"Welcome to hintr"}' and i < 10:
         try:
-            (exit_code, result) = docker_util.exec_safely(
-                loadbalancer, ["curl", "http://localhost:" + str(cfg.hintr_port)]
+            (_, result) = docker_util.exec_safely(
+                loadbalancer, ["curl", "-s", api_instances[0].name + ":" + str(cfg.hintr_port)]
             )
-            if i > 10:
-                break
             i += 1
-            print(result)
-        except Exception as e:
-            print(e)
-            if i > 10:
-                break
+        except:
+            time.sleep(0.5)
             i += 1
-    if (result != '{"status":"success","errors":null,"data":"Welcome to hintr"}' ):
-        raise Exception(result)
-    print(docker_util.exec_safely(
-        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args))
-    # docker_util.exec_safely(
-    # loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
+    docker_util.exec_safely(
+        loadbalancer, ["configure_backend", "-p", str(cfg.hintr_port)] + args)
 
 
 # It can take a while for the container to come up

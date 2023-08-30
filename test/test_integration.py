@@ -167,16 +167,12 @@ def test_configure_proxy():
 
 def test_update_hintr_and_all():
     hint_cli.main(["start"])
-    hint_cli.main(["upgrade", "hintr"])
 
-    # f = io.StringIO()
-    # with redirect_stdout(f):
-    #     try:
-    #     except Exception as e:
-    #         print(f.getvalue())
-    #         raise
+    f = io.StringIO()
+    with redirect_stdout(f):
+        hint_cli.main(["upgrade", "hintr"])
 
-    p = ""
+    p = f.getvalue()
     assert "Pulling docker image hintr" in p
     assert "Pulling docker image hintr_api" in p
     assert "Pulling docker image db-migrate" not in p
