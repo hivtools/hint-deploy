@@ -364,23 +364,14 @@ def proxy_configure(container, cfg):
         docker_util.exec_safely(container, args)
 
 
-def check_hintr_online(loadbalancer, port, name):
-    result = ""
-    i = 0
-    success_message = (b'{"status":"success",'
-                       b'"errors":null,'
-                       b'"data":"Welcome to hintr"}')
-    while result != success_message and i < 20:
-        try:
-            (_, result) = docker_util.exec_safely(
-                loadbalancer,
-                ["curl", "-s", name + ":" + port]
-            )
-        except Exception as e:
-            print(e)
-            time.sleep(1)
-        i += 1
-    return result == success_message
+def ensure_hintr_online(loadbalancer, port, name, attempts=30):
+    for i in range(attempts):
+        code, output = loadbalancer.exec_run(["curl", "-s", name + ":" + port])
+        if code == 0:
+            return
+        print(f"hintr {name} not yet ready: {output.decode('UTF-8')}")
+        time.sleep(1)
+    raise Exception(f"hintr worker {name} did not come up in time")
 
 
 def loadbalancer_register_hintr_api(constellation):
@@ -391,10 +382,8 @@ def loadbalancer_register_hintr_api(constellation):
     api_instances = constellation.containers.get("hintr_api", cfg.prefix)
     args = []
     for instance in api_instances:
+        ensure_hintr_online(loadbalancer, port, instance.name)
         args += ["--address", instance.name]
-        is_online = check_hintr_online(loadbalancer, port, instance.name)
-        if not is_online:
-            raise Exception("{} did not come online".format(instance.name))
 
     docker_util.exec_safely(
         loadbalancer, ["configure_backend", "-p", port] + args)
