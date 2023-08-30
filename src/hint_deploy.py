@@ -370,7 +370,7 @@ def check_hintr_online(loadbalancer, port, name):
     success_message = (b'{"status":"success",'
                        b'"errors":null,'
                        b'"data":"Welcome to hintr"}')
-    while result != success_message and i < 10:
+    while result != success_message and i < 20:
         try:
             (_, result) = docker_util.exec_safely(
                 loadbalancer,
