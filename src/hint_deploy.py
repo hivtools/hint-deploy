@@ -101,8 +101,10 @@ class HintConfig:
             dat, ["deploy", "protect_data"], True, False)
 
     def get_constellation_mounts(self, mount_ref):
-        return [constellation.ConstellationMount(key, self.volumes[key]["path"])
-                for key in config.config_list(self.dat, [mount_ref, "volumes"])]
+        return [
+            constellation.ConstellationMount(key, self.volumes[key]["path"])
+            for key in config.config_list(self.dat, [mount_ref, "volumes"])
+        ]
 
 
 def hint_constellation(cfg):
@@ -181,8 +183,9 @@ def hint_constellation(cfg):
     containers = [db, redis, hintr, load_balancer,
                   hint, proxy, calibrate_worker, worker]
 
+    volume_obj = {k: v["name"] for (k, v) in cfg.volumes.items()}
     obj = constellation.Constellation("hint", cfg.prefix, containers,
-                                      cfg.network, {k: v["name"] for (k, v) in cfg.volumes.items()},
+                                      cfg.network, volume_obj,
                                       data=cfg, vault_config=cfg.vault)
 
     return obj
@@ -275,7 +278,8 @@ def hint_user(cfg, action, email, pull, password=None):
 
 def hint_user_run(ref, args, cfg):
     client = docker.client.from_env()
-    mounts = [docker.types.Mount(cfg.volumes["config"]["path"], cfg.volumes["config"]["name"],
+    config_volume = cfg.volumes["config"]
+    mounts = [docker.types.Mount(config_volume["path"], config_volume["name"],
                                  read_only=True)]
     res = client.containers.run(str(ref), args, network=cfg.network,
                                 mounts=mounts, remove=True, detach=False)
@@ -304,7 +308,9 @@ def db_configure(container, cfg):
 
 def hint_configure(container, cfg):
     print("[hint] Configuring hint")
-    docker_util.exec_safely(container, ["mkdir", "-p", cfg.volumes["config"]["path"] + "/token_key"])
+    config_path = cfg.volumes["config"]["path"]
+    docker_util.exec_safely(container,
+                            ["mkdir", "-p", config_path + "/token_key"])
     config = {
         "application_url": cfg.proxy_url,
         # drop (start)
@@ -334,7 +340,7 @@ def hint_configure(container, cfg):
 
     config_str = "".join("{}={}\n".format(k, v) for k, v in config.items())
     docker_util.string_into_container(config_str, container,
-                                      cfg.volumes["config"]["path"] + "/config.properties")
+                                      config_path + "/config.properties")
     print("[hint] Waiting for hint to become responsive")
     wait(lambda: requests.get("http://localhost:8080").status_code == 200,
          "Hint did not become responsive in time")
