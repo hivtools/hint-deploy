@@ -75,8 +75,8 @@ read -p "Backup keys? y/n" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     vault login -address=$VAULT_ADDR -method=github
-    PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
-    PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
+    PUBLIC_KEY=$(docker run --rm --volumes-from hint-hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
+    PRIVATE_KEY=$(docker run --rm --volumes-from hint-hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
     echo "Writing private and public keys to $VAULT_PATH"
     vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
     echo "$VAULT_PATH" | ssh $SERVER "cat > $BACKUP_DIR/cipher_path"
@@ -88,11 +88,11 @@ IMAGE_TAG=mrcide/hint-backup:latest
 docker build -t $IMAGE_TAG -f $SCRIPT_DIR/Dockerfile .
 
 echo "*** Backing up postgres data"
-docker exec hint_db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_DIR/db_dump.sql"
+docker exec hint-db pg_dumpall -U postgres | ssh $SERVER "cat > $BACKUP_DIR/db_dump.sql"
 
 echo "*** Backing up redis data"
 docker run --rm \
-    --volumes-from hint_redis \
+    --volumes-from hint-redis \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_DIR=$BACKUP_DIR \
@@ -101,7 +101,7 @@ docker run --rm \
 
 echo "*** Backing up results data"
 docker run --rm \
-    --volumes-from hint_hintr \
+    --volumes-from hint-hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_DIR=$BACKUP_DIR \
@@ -110,7 +110,7 @@ docker run --rm \
 
 echo "*** Backing up uploads data"
 docker run --rm \
-    --volumes-from hint_hintr \
+    --volumes-from hint-hintr \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_DIR=$BACKUP_DIR \

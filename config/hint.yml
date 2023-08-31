@@ -17,19 +17,20 @@ volumes:
 
 redis:
   tag: "5.0"
-  volumes: "redis"
+  volumes:
+    - "redis"
 
 db:
   tag: "master"
   volumes:
-    0: "db"
+    - "db"
 
 hint:
   tag: "master"
   volumes:
-    0: "uploads"
-    1: "config"
-    2: "results"
+    - "uploads"
+    - "config"
+    - "results"
   expose: true
 
 hintr-loadbalancer:
@@ -40,10 +41,10 @@ hintr:
   tag: "master"
   port: 8888
   workers: 2
-  calibrate_workers: 1
+  calibrate-workers: 1
   volumes:
-    0: "uploads"
-    1: "results"
+    - "uploads"
+    - "results"
   use_mock_model: false
 
 proxy:

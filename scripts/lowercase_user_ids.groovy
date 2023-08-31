@@ -41,7 +41,7 @@ class Profile {
     }
 }
 
-def dbUrl      = "jdbc:postgresql://hint_db/hint"
+def dbUrl      = "jdbc:postgresql://hint-db/hint"
 def dbUser     = "hintuser"
 def dbPassword = "changeme"
 def dbDriver   = "org.postgresql.Driver"

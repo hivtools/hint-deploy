@@ -32,5 +32,5 @@ hintr-loadbalancer:
 
 hintr:
   workers: 3
-  calibrate_workers: 1
+  calibrate-workers: 1
 

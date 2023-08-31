@@ -46,14 +46,14 @@ def test_start_hint():
     assert docker_util.volume_exists("hint_db_data")
     assert docker_util.volume_exists("hint_uploads")
     assert docker_util.volume_exists("hint_results")
-    assert docker_util.container_exists("hint_db")
-    assert docker_util.container_exists("hint_redis")
-    assert docker_util.container_exists("hint_hintr")
-    assert docker_util.container_exists("hint_hint")
-    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert docker_util.container_exists("hint-db")
+    assert docker_util.container_exists("hint-redis")
+    assert docker_util.container_exists("hint-hintr")
+    assert docker_util.container_exists("hint-hint")
+    assert len(docker_util.containers_matching("hint-hintr-api-", False)) == 1
+    assert len(docker_util.containers_matching("hint-worker-", False)) == 2
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker_", False)) == 1
+        "hint-calibrate-worker-", False)) == 1
 
     # Some basic user management
     user = "test@example.com"
@@ -90,7 +90,7 @@ def test_start_hint():
              '"http://localhost:8888/hintr/worker/status"),' + \
              '"text", encoding="UTF-8"))'
     args = ["Rscript", "-e", script]
-    hintr = obj.containers.get("hintr_api", obj.prefix)[0]
+    hintr = obj.containers.get("hintr-api", obj.prefix)[0]
     result = docker_util.exec_safely(hintr, args).output
     logs = result.decode("UTF-8")
     data = json.loads(logs)["data"]
@@ -102,14 +102,14 @@ def test_start_hint():
     assert not docker_util.volume_exists("hint_db_data")
     assert not docker_util.volume_exists("hint_uploads")
     assert not docker_util.volume_exists("hint_results")
-    assert not docker_util.container_exists("hint_db")
-    assert not docker_util.container_exists("hint_redis")
-    assert not docker_util.container_exists("hint_hintr")
-    assert not docker_util.container_exists("hint_hint")
-    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
+    assert not docker_util.container_exists("hint-db")
+    assert not docker_util.container_exists("hint-redis")
+    assert not docker_util.container_exists("hint-hintr")
+    assert not docker_util.container_exists("hint-hint")
+    assert len(docker_util.containers_matching("hint-hintr-api-", False)) == 0
+    assert len(docker_util.containers_matching("hint-worker-", False)) == 0
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker_", False)) == 0
+        "hint-calibrate-worker-", False)) == 0
 
 
 def test_start_hint_from_cli():
@@ -174,13 +174,13 @@ def test_update_hintr_and_all():
 
     p = f.getvalue()
     assert "Pulling docker image hintr" in p
-    assert "Pulling docker image hintr_api" in p
+    assert "Pulling docker image hintr-api" in p
     assert "Pulling docker image db-migrate" not in p
-    assert "Killing hint_hintr" in p
-    assert "Stopping hint_hintr_api_" in p
+    assert "Killing hint-hintr" in p
+    assert "Stopping hint-hintr-api-" in p
     assert "Starting hintr" in p
-    assert "Starting *service* hintr_api" in p
-    assert "Starting *service* calibrate_worker" in p
+    assert "Starting *service* hintr-api" in p
+    assert "Starting *service* calibrate-worker" in p
     assert "Starting *service* worker" in p
     assert "[hintr] Configuring loadbalancer" in p
 
@@ -188,18 +188,18 @@ def test_update_hintr_and_all():
     assert docker_util.volume_exists("hint_db_data")
     assert docker_util.volume_exists("hint_uploads")
     assert docker_util.volume_exists("hint_results")
-    assert docker_util.container_exists("hint_db")
-    assert docker_util.container_exists("hint_redis")
-    assert docker_util.container_exists("hint_hintr")
-    assert docker_util.container_exists("hint_hint")
-    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
-    assert len(docker_util.containers_matching("hint_hintr_api_", True)) == 1
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
-    assert len(docker_util.containers_matching("hint_worker_", True)) == 4
+    assert docker_util.container_exists("hint-db")
+    assert docker_util.container_exists("hint-redis")
+    assert docker_util.container_exists("hint-hintr")
+    assert docker_util.container_exists("hint-hint")
+    assert len(docker_util.containers_matching("hint-hintr-api-", False)) == 1
+    assert len(docker_util.containers_matching("hint-hintr-api-", True)) == 1
+    assert len(docker_util.containers_matching("hint-worker-", False)) == 2
+    assert len(docker_util.containers_matching("hint-worker-", True)) == 4
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker", False)) == 1
+        "hint-calibrate-worker", False)) == 1
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker", True)) == 2
+        "hint-calibrate-worker", True)) == 2
 
     # Can access hintr endpoints
     res = s.get("http://localhost:8888")
@@ -231,14 +231,14 @@ def test_update_hintr_and_all():
     assert docker_util.volume_exists("hint_db_data")
     assert docker_util.volume_exists("hint_uploads")
     assert docker_util.volume_exists("hint_results")
-    assert docker_util.container_exists("hint_db")
-    assert docker_util.container_exists("hint_redis")
-    assert docker_util.container_exists("hint_hintr")
-    assert docker_util.container_exists("hint_hint")
-    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 1
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 2
+    assert docker_util.container_exists("hint-db")
+    assert docker_util.container_exists("hint-redis")
+    assert docker_util.container_exists("hint-hintr")
+    assert docker_util.container_exists("hint-hint")
+    assert len(docker_util.containers_matching("hint-hintr-api-", False)) == 1
+    assert len(docker_util.containers_matching("hint-worker-", False)) == 2
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker_", False)) == 1
+        "hint-calibrate-worker-", False)) == 1
 
     # Can access hintr endpoints
     res = s.get("http://localhost:8888")
@@ -285,13 +285,13 @@ def test_stop_kills_loadbalancer():
         hint_cli.main(["stop"])
 
     p = f.getvalue()
-    assert "Killing hint_hintr" in p
+    assert "Killing hint-hintr" in p
 
-    assert not docker_util.container_exists("hint_hintr")
-    assert not docker_util.container_exists("hint_db")
-    assert not docker_util.container_exists("hint_redis")
-    assert not docker_util.container_exists("hint_hint")
-    assert len(docker_util.containers_matching("hint_hintr_api_", False)) == 0
-    assert len(docker_util.containers_matching("hint_worker_", False)) == 0
+    assert not docker_util.container_exists("hint-hintr")
+    assert not docker_util.container_exists("hint-db")
+    assert not docker_util.container_exists("hint-redis")
+    assert not docker_util.container_exists("hint-hint")
+    assert len(docker_util.containers_matching("hint-hintr-api-", False)) == 0
+    assert len(docker_util.containers_matching("hint-worker-", False)) == 0
     assert len(docker_util.containers_matching(
-        "hint_calibrate_worker_", False)) == 0
+        "hint-calibrate-worker-", False)) == 0

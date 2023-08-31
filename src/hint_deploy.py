@@ -30,7 +30,7 @@ class HintConfig:
         self.volumes = config.config_dict(dat, ["volumes"])
         self.hintr_workers = config.config_integer(dat, ["hintr", "workers"])
         self.hintr_calibrate_workers = config.config_integer(
-            dat, ["hintr", "calibrate_workers"])
+            dat, ["hintr", "calibrate-workers"])
         self.hintr_use_mock_model = config.config_boolean(
             dat, ["hintr", "use_mock_model"], True, False)
         self.hintr_port = config.config_integer(
@@ -101,9 +101,8 @@ class HintConfig:
             dat, ["deploy", "protect_data"], True, False)
 
     def get_constellation_mounts(self, mount_ref):
-        print(config.config_string(self.dat, [mount_ref, "volumes"]))
         return [constellation.ConstellationMount(key, self.volumes[key]["path"])
-                for key in config.config_string(self.dat, [mount_ref, "volumes"])]
+                for key in config.config_list(self.dat, [mount_ref, "volumes"])]
 
 
 def hint_constellation(cfg):
@@ -137,7 +136,7 @@ def hint_constellation(cfg):
     # for details of how labels are used by filebeat autodiscover
     labels = {"co.elastic.logs/json.add_error_key": "true"}
     hintr = constellation.ConstellationService(
-        "hintr_api", hintr_ref, cfg.api_instances, args=hintr_args,
+        "hintr-api", hintr_ref, cfg.api_instances, args=hintr_args,
         mounts=hintr_mounts, environment=hintr_env, labels=labels)
 
     # hintr load balancer
@@ -171,7 +170,7 @@ def hint_constellation(cfg):
     worker_ref = cfg.hintr_worker_ref
     calibrate_worker_args = ["--calibrate-only"]
     calibrate_worker = constellation.ConstellationService(
-        "calibrate_worker", worker_ref, cfg.hintr_calibrate_workers,
+        "calibrate-worker", worker_ref, cfg.hintr_calibrate_workers,
         args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
 
     # hintr workers
@@ -205,8 +204,8 @@ def hint_start(obj, cfg, args):
 
 def hint_upgrade_hintr(obj):
     loadbalancer = obj.containers.find("hintr")
-    hintr_api = obj.containers.find("hintr_api")
-    calibrate_worker = obj.containers.find("calibrate_worker")
+    hintr_api = obj.containers.find("hintr-api")
+    calibrate_worker = obj.containers.find("calibrate-worker")
     worker = obj.containers.find("worker")
     hintr_containers = hintr_api.get(obj.prefix)
     loadbalancer_container = loadbalancer.get(obj.prefix)
@@ -371,7 +370,7 @@ def loadbalancer_register_hintr_api(constellation):
     cfg = constellation.data
     port = str(cfg.hintr_port)
     loadbalancer = constellation.containers.get("hintr", cfg.prefix)
-    api_instances = constellation.containers.get("hintr_api", cfg.prefix)
+    api_instances = constellation.containers.get("hintr-api", cfg.prefix)
     args = []
     for instance in api_instances:
         ensure_hintr_online(loadbalancer, port, instance.name)
