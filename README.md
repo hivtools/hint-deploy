@@ -111,7 +111,7 @@ Constellation hint
     - hintr (hint-hintr): running
     - hint (hint-hint): running
     - proxy (hint-proxy): running
-    - worker (hint-worker_<i>): running (2)
+    - worker (hint-worker-<i>): running (2)
 ```
 
 The first line indicates the active configuration (see [`config/`](config)).  The number in brackets on the last line indicates the number of workers.  Hopefully everything else is self explanatory.
