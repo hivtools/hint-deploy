@@ -16,7 +16,7 @@ hintr-loadbalancer:
 
 hintr:
   workers: 5
-  calibrate_workers: 2
+  calibrate-workers: 2
 
 proxy:
   host: naomi.unaids.org

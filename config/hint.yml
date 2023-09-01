@@ -1,16 +1,36 @@
+volumes:
+    db:
+      name: "hint_db_data"
+      path: "/pgdata"
+    redis:
+      name: "hint_redis_data"
+      path: "/data"
+    config:
+      name: "hint_config"
+      path: "/etc/hint"
+    uploads:
+      name: "hint_uploads"
+      path: "/uploads"
+    results:
+      name: "hint_results"
+      path: "/results"
+
 redis:
   tag: "5.0"
-  volume: "hint_redis_data"
+  volumes:
+    - "redis"
 
 db:
-  tag: master
-  volume: "hint_db_data"
+  tag: "master"
+  volumes:
+    - "db"
 
 hint:
   tag: "master"
   volumes:
-    uploads: "hint_uploads"
-    config: "hint_config"
+    - "uploads"
+    - "config"
+    - "results"
   expose: true
 
 hintr-loadbalancer:
@@ -21,9 +41,10 @@ hintr:
   tag: "master"
   port: 8888
   workers: 2
-  calibrate_workers: 1
+  calibrate-workers: 1
   volumes:
-    results: "hint_results"
+    - "uploads"
+    - "results"
   use_mock_model: false
 
 proxy:

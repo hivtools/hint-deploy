@@ -63,7 +63,7 @@ def test_ensure_online_raises_exception_if_no_hintr():
     obj.start()
     port = str(cfg.hintr_port)
     loadbalancer = obj.containers.get("hintr", cfg.prefix)
-    api_instances = obj.containers.get("hintr_api", cfg.prefix)
+    api_instances = obj.containers.get("hintr-api", cfg.prefix)
     name = api_instances[0].name
     api_instances[0].stop()
     with pytest.raises(Exception,

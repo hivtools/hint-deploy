@@ -106,12 +106,12 @@ Constellation hint
     - uploads (hint_uploads): created
     - config (hint_config): created
   * Containers:
-    - db (hint_db): running
-    - redis (hint_redis): running
-    - hintr (hint_hintr): running
-    - hint (hint_hint): running
-    - proxy (hint_proxy): running
-    - worker (hint_worker_<i>): running (2)
+    - db (hint-db): running
+    - redis (hint-redis): running
+    - hintr (hint-hintr): running
+    - hint (hint-hint): running
+    - proxy (hint-proxy): running
+    - worker (hint-worker-<i>): running (2)
 ```
 
 The first line indicates the active configuration (see [`config/`](config)).  The number in brackets on the last line indicates the number of workers.  Hopefully everything else is self explanatory.

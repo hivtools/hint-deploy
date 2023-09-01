@@ -36,16 +36,16 @@ else
     RESTORE_KEY=false
 fi
 
-docker exec hint_db pg_dumpall -U postgres >$BACKUP_WORKING_DIR/db_dump.sql
-docker run --rm --volumes-from hint_redis -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/redis_backup.tar -C /data .
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/results_backup.tar -C /results .
-docker run --rm --volumes-from hint_hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
+docker exec hint-db pg_dumpall -U postgres >$BACKUP_WORKING_DIR/db_dump.sql
+docker run --rm --volumes-from hint-redis -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/redis_backup.tar -C /data .
+docker run --rm --volumes-from hint-hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/results_backup.tar -C /results .
+docker run --rm --volumes-from hint-hintr -v $BACKUP_WORKING_DIR:/backup busybox tar -cf /backup/uploads_backup.tar -C /uploads .
 find $BACKUP_WORKING_DIR -type f \( -not -name "checklist.chk" \) -exec md5sum "{}" + >$BACKUP_WORKING_DIR/checklist.chk
 
 if [ $RESTORE_KEY = true ]; then
     vault login -address=$VAULT_ADDR -method=github
-    PUBLIC_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
-    PRIVATE_KEY=$(docker run --rm --volumes-from hint_hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
+    PUBLIC_KEY=$(docker run --rm --volumes-from hint-hint busybox cat /etc/hint/token_key/public_key.der | base64 --wrap=0)
+    PRIVATE_KEY=$(docker run --rm --volumes-from hint-hint busybox cat /etc/hint/token_key/private_key.der | base64 --wrap=0)
     echo "Writing private and public keys to $VAULT_PATH"
     vault write -address=$VAULT_ADDR $VAULT_PATH public=$PUBLIC_KEY private=$PRIVATE_KEY
     echo "$VAULT_PATH" >$BACKUP_WORKING_DIR/cipher_path
