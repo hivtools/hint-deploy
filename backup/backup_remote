@@ -101,7 +101,7 @@ docker run --rm \
 
 echo "*** Backing up results data"
 docker run --rm \
-    --volumes-from hint-hintr \
+    --volumes-from hint-hint \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_DIR=$BACKUP_DIR \
@@ -110,7 +110,7 @@ docker run --rm \
 
 echo "*** Backing up uploads data"
 docker run --rm \
-    --volumes-from hint-hintr \
+    --volumes-from hint-hint \
     -v $HOME/.ssh:/ssh \
     -e SERVER=$SERVER \
     -e BACKUP_DIR=$BACKUP_DIR \
