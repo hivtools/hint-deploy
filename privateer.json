@@ -3,7 +3,10 @@
     {
       "name": "annex",
       "hostname": "wpia-annex2.montagu.dide.ic.ac.uk",
-      "port": 10024
+      "port": 10024,
+      "key_volume": "privateer_hint_keys",
+      "data_volume": "privateer_hint_data",
+      "container": "privateer_hint"
     }
   ],
   "clients": [
