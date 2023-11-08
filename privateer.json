@@ -1,0 +1,30 @@
+{
+  "servers": [
+    {
+      "name": "annex",
+      "hostname": "wpia-annex2.montagu.dide.ic.ac.uk",
+      "port": 10024
+    }
+  ],
+  "clients": [
+    {
+      "name": "production",
+      "backup": ["hint_redis_data", "hint_uploads", "hint_results"]
+    }
+  ],
+  "volumes": [
+    {
+      "name": "hint_redis_data"
+    },
+    {
+      "name": "hint_uploads"
+    },
+    {
+      "name": "hint_results"
+    }
+  ],
+  "vault": {
+    "url": "https://vault.dide.ic.ac.uk:8200",
+    "prefix": "/secret/hint/privateer"
+  }
+}
