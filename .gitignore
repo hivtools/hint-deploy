@@ -7,3 +7,4 @@ config/.last_deploy
 config/other.yml
 .vscode
 .run
+.privateer_identity

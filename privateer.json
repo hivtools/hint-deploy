@@ -1,0 +1,53 @@
+{
+  "servers": [
+    {
+      "name": "annex",
+      "hostname": "wpia-annex2.montagu.dide.ic.ac.uk",
+      "port": 10024,
+      "key_volume": "privateer_hint_keys",
+      "data_volume": "privateer_hint_data",
+      "container": "privateer_hint"
+    }
+  ],
+  "clients": [
+    {
+      "name": "production",
+      "backup": ["hint_redis_data", "hint_uploads", "hint_results"],
+      "schedule": {
+        "port": 8081,
+        "jobs": [
+          {
+            "server": "annex",
+            "volume": "hint_redis_data",
+            "schedule": "@daily"
+          },
+          {
+            "server": "annex",
+            "volume": "hint_uploads",
+            "schedule": "@daily"
+          },
+          {
+            "server": "annex",
+            "volume": "hint_results",
+            "schedule": "@daily"
+          }
+        ]
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "hint_redis_data"
+    },
+    {
+      "name": "hint_uploads"
+    },
+    {
+      "name": "hint_results"
+    }
+  ],
+  "vault": {
+    "url": "https://vault.dide.ic.ac.uk:8200",
+    "prefix": "/secret/hint/privateer"
+  }
+}
