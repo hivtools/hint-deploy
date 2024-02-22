@@ -41,6 +41,10 @@ Options:
 
 Once a configuration is set during `start`, it will be reused by subsequent commands (`stop`, `status`, `upgrade`, `user`, etc) and removed during `destroy`.  The configuration usage information is stored in `config/.last_deploy`.
 
+## Hint architecture
+
+![architecture](./images/architecture.png)
+
 ## Testing
 
 hint-deploy uses [AppRole](https://developer.hashicorp.com/vault/docs/auth/approle) to authenticate with the vault. To run tests locally you will need to set `VAULT_AUTH_ROLE_ID` and `VAULT_AUTH_SECRET_ID` to valid role-id and secret-it.
