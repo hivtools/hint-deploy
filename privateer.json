@@ -33,6 +33,30 @@
           }
         ]
       }
+    },
+    {
+      "name": "preview",
+      "backup": ["hint_redis_data", "hint_uploads", "hint_results"],
+      "schedule": {
+        "port": 8081,
+	"jobs": [
+	  {
+            "server": "annex",
+	    "volume": "hint_redis_data",
+	    "schedule": "@daily"
+	  },
+	  {
+            "server": "annex",
+            "volume": "hint_uploads",
+            "schedule": "@daily"
+          },
+          {
+            "server": "annex",
+            "volume": "hint_results",
+            "schedule": "@daily"
+          }
+        ]
+      }
     }
   ],
   "volumes": [
