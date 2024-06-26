@@ -12,7 +12,7 @@
   "clients": [
     {
       "name": "production",
-      "backup": ["hint_redis_data", "hint_uploads", "hint_results"],
+      "backup": ["hint_redis_data", "hint_uploads", "hint_results", "hint_db_dump"],
       "schedule": {
         "port": 8081,
         "jobs": [
@@ -36,7 +36,7 @@
     },
     {
       "name": "preview",
-      "backup": ["hint_redis_data", "hint_uploads", "hint_results"],
+      "backup": ["hint_redis_data", "hint_uploads", "hint_results", "hint_db_dump"],
       "schedule": {
         "port": 8081,
 	"jobs": [
@@ -68,6 +68,9 @@
     },
     {
       "name": "hint_results"
+    },
+    {
+      "name": "hint_db_dump"
     }
   ],
   "vault": {

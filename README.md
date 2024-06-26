@@ -65,10 +65,12 @@ vault write auth/approle/login role_id=$VAULT_AUTH_ROLE_ID secret_id=$VAULT_AUTH
 
 ## Deployment onto the servers
 
-We have two copies of hint deployed:
+We have four copies of hint deployed:
 
-- [production](https://naomi.dide.ic.ac.uk) is `https://naomi.dide.ic.ac.uk`
-- [staging](https://naomi-staging.dide.ic.ac.uk) is `https://naomi-staging.dide.ic.ac.uk`
+- [production](https://naomi.unaids.org) at `https://naomi.unaids.org` or `naomi.dide.ic.ac.uk` from the Imperial network.
+- [preview](https://naomi-preview.dide.ic.ac.uk) at `https://naomi-preview.dide.ic.ac.uk`
+- [staging](https://naomi-staging.dide.ic.ac.uk) at `https://naomi-staging.dide.ic.ac.uk`
+- [dev](https://naomi-dev.dide.ic.ac.uk) at `https://naomi-dev.dide.ic.ac.uk`
 
 To get onto production, ssh to `naomi.dide` as the `hint` user with
 
@@ -208,6 +210,51 @@ Images available on the remote are tagged with
 * `hintr` - branch name e.g. `mrc-745`, git hash e.g. `56c3b7f`, version number e.g. `v0.0.15`
 * `hint`- branch name e.g. `mrc-745`, git hash e.g. `6125a71`
 
+## Backup
+
+This repo contains configuration for [privateer](https://github.com/reside-ic/privateer) backups. The redis data, uploads and results are backed up on a schedule. But note that backing up the postgres container is not supported yet in privateer so that requires an additional manual step. It is best to stop the server before running this.
+
+1. Run a db dump into a `hint_db_dump` volume
+   ```
+   docker volume create hint_db_dump
+   docker run --rm -d\
+     -v hint_db_data:/pgdata \
+     -v hint_db_dump:/db_dump \
+     -e POSTGRES_PASSWORD=password \
+     -e PGDATA=/pgdata \
+     --name db_backup \
+     postgres:10.3
+   
+   docker exec -i db_backup sh -c "pg_dumpall -U postgres > /db_dump/db_dump.sql"
+   docker stop db_backup 
+   ```
+1. Backup with dump privateer
+   ```
+   privateer backup hint_db_dump
+   ```
+
+To restore
+
+1. Restore the dump volume, changing the source as required
+   ```
+   privateer restore hint_db_dump --source=preview
+   ```
+
+1. Restore db data from the dump. Note this will erro saying role "postgres" already exists but this can be ignored
+   ```
+   docker run --rm -d \
+     -v hint_db_data:/pgdata \
+     -v hint_db_dump:/db_dump \
+     -e POSTGRES_PASSWORD=password \
+     -e PGDATA=/pgdata \
+     --name db_restore \
+     postgres:10.3
+  
+   docker exec -i db_restore sh -c "cat /db_dump/db_dump.sql | psql -U postgres postgres > /dev/null"
+   docker stop db_restore
+   ```
+
+There is also a directory here `/backup` which contains manual backup scripts used before we created privateer. These are left for most for posterity but also if we need to restore from one of these old backups. They should not be used for creating any new backups.
 
 ## License
 
