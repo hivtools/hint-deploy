@@ -30,6 +30,5 @@ hintr-loadbalancer:
   api_instances: 2
 
 hintr:
-  workers: 3
+  workers: 2
   calibrate-workers: 1
-

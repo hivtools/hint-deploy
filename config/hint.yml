@@ -38,7 +38,7 @@ hintr-loadbalancer:
   api_instances: 1
 
 hintr:
-  tag: "master"
+  tag: "main"
   port: 8888
   workers: 2
   calibrate-workers: 1
