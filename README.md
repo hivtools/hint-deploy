@@ -1,9 +1,9 @@
 # hint-deploy
 
 [![Build status](https://github.com/hint/hint-deploy/workflows/test/badge.svg)](https://github.com/hint/hint-deploy/actions)
-[![codecov.io](https://codecov.io/github/mrc-ide/hint-deploy/coverage.svg?branch=master)](https://codecov.io/github/mrc-ide/hint-deploy?branch=master)
+[![codecov.io](https://codecov.io/github/hivtools/hint-deploy/coverage.svg?branch=main)](https://codecov.io/github/hivtools/hint-deploy?branch=master)
 
-Deployment scripts for [hint](https://github.com/mrc-ide/hint)
+Deployment scripts for [hint](https://github.com/hivtools/hint)
 
 ## Installation
 
@@ -204,7 +204,7 @@ The production configuration will read these in.
 
 ## Modifying deploy
 
-By default `hint` will deploy with docker containers built off the `master` image. If you want to deploy using an image from a particular branch for testing you can do this by passing one of the args `--hintr-branch=<tag-name>` or `--hint-branch=<tag-name>` or by modifying the `tag` section `config/hint.yml` file.
+By default `hint` will deploy with docker containers built off the `main` image. If you want to deploy using an image from a particular branch for testing you can do this by passing one of the args `--hintr-branch=<tag-name>` or `--hint-branch=<tag-name>` or by modifying the `tag` section `config/hint.yml` file.
 
 Images available on the remote are tagged with
 * `hintr` - branch name e.g. `mrc-745`, git hash e.g. `56c3b7f`, version number e.g. `v0.0.15`

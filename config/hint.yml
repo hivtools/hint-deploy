@@ -21,12 +21,12 @@ redis:
     - "redis"
 
 db:
-  tag: "master"
+  tag: "main"
   volumes:
     - "db"
 
 hint:
-  tag: "master"
+  tag: "main"
   volumes:
     - "uploads"
     - "config"
@@ -54,7 +54,7 @@ proxy:
 
 docker:
   network: hint_nw
-  default_tag: master
+  default_tag: main
   prefix: hint
 
 users:

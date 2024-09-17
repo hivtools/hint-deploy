@@ -16,7 +16,7 @@ class HintConfig:
         self.network = config.config_string(dat, ["docker", "network"])
         self.prefix = config.config_string(dat, ["docker", "prefix"])
         default_tag = config.config_string(dat, ["docker", "default_tag"],
-                                           True, "master")
+                                           True, "main")
         self.redis_tag = config.config_string(dat, ["redis", "tag"],
                                               True, default_tag)
         self.db_tag = config.config_string(dat, ["db", "tag"],

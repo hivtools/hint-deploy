@@ -1,5 +1,5 @@
 // We have upgraded pac4j from v 3.3.0 to v 5.4.3 see
-// https://github.com/mrc-ide/hint/pull/731/files, the update includes changes
+// https://github.com/hivtools/hint/pull/731/files, the update includes changes
 // to the serialization format used for the profile. It previously used
 // java serialization but now uses JSON. Support for Java serialized profiles
 // has been removed meaning that when a user with an old format profile tries to
