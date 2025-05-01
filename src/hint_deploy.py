@@ -102,7 +102,7 @@ class HintConfig:
 
     def get_constellation_mounts(self, mount_ref):
         return [
-            constellation.ConstellationVolumeMount(key, self.volumes[key]["path"])
+            constellation.ConstellationMount(key, self.volumes[key]["path"])
             for key in config.config_list(self.dat, [mount_ref, "volumes"])
         ]
 
