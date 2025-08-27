@@ -170,7 +170,7 @@ def hint_constellation(cfg):
 
     # calibrate worker
     worker_ref = cfg.hintr_worker_ref
-    calibrate_worker_args = ["--calibrate-only"]
+    calibrate_worker_args = ["--worker-config=calibrate_only"]
     calibrate_worker = constellation.ConstellationService(
         "calibrate-worker", worker_ref, cfg.hintr_calibrate_workers,
         args=calibrate_worker_args, mounts=hintr_mounts, environment=hintr_env)
